@@ -17,6 +17,7 @@ import { drawActiveZones } from './engine/effectDrawer';
 import * as UIDrawer from './engine/uiDrawer';
 import { initMouseEvents } from './events/mouseHandlers';
 import { state } from './state/globalState';
+import * as RadialMenu from './ui/radialMenu';
 
 // ======================================================
 // CANVAS E RENDERIZAÇÃO
@@ -64,8 +65,8 @@ const mouseTools = {
     closeCharacterMenu,
     openCharacterMenu,
     renderSideCharacterStatuses,
-    renderEffectMenu: () => renderEffectMenu(),
-    showMenu: (x, y, isEditing) => showMenu(x, y, isEditing)
+    renderEffectMenu: RadialMenu.renderEffectMenu,
+    showMenu: RadialMenu.showMenu
 };
 
 initMouseEvents(canvas, ctx, state, mouseTools);
@@ -407,262 +408,6 @@ function updateCharInitiative(id, value) {
     });
 }
 
-function applySpellObject(spellData) {
-    if (!state.pendingSpellPoint) return;
-
-    const newSpell = {
-        type: 'spell_object',
-        id: spellData.id,
-        x: state.pendingSpellPoint.x,
-        y: state.pendingSpellPoint.y,
-        radius: spellData.radius || 100,
-        opacity: spellData.opacity || 0.8,
-        rotation: 0,
-        rotateSpeed: spellData.rotateSpeed || 0,
-        fade: spellData.fade !== undefined ? spellData.fade : true, // <--- ADICIONE ESTA LINHA
-        video: null as any
-    };
-
-    if (spellData.videoPath) {
-      newSpell.video = createVideo(spellData.videoPath);
-    }
-
-    state.activeZones.push(newSpell); // Adiciona na lista de desenho
-    state.pendingSpellPoint = null;   // Limpa o ponto temporário
-}
-
-function setEffect(item, e) {
-    if (e) e.stopPropagation();
-    
-    // 1. Prepara o Elemento de Vídeo ou Imagem se existir no item do banco de dados
-    if (item.videoPath && !item.videoElement) {
-        item.videoElement = createVideo(item.videoPath);
-    }
-    if (item.imagePath && !item.imageElement) {
-        item.imageElement = createImage(item.imagePath);
-    }
-
-    // 2. Lógica de Vagalumes (Partículas)
-    const bb = getBoundingBox(state.lastCirclePath.length > 0 ? state.lastCirclePath : (state.editingZone ? state.editingZone.path : []));
-    const particles = [];
-    if (item.id === 'fireflies') {
-        for (let i = 0; i < 35; i++) {
-            particles.push({
-                x: bb.minX + Math.random() * bb.width,
-                y: bb.minY + Math.random() * bb.height,
-                vx: (Math.random() - 0.5) * 0.4,
-                vy: (Math.random() - 0.5) * 0.4,
-                size: Math.random() * 1.5 + 0.8,
-                alpha: Math.random(),
-                pulse: (Math.random() * 0.015) + 0.005
-            });
-        }
-    }
-
-    // 3. Monta o objeto com os dados do efeito
-    const zoneData = {
-        path: state.lastCirclePath.length > 0 ? [...state.lastCirclePath] : (state.editingZone ? state.editingZone.path : []),
-        type: item.id,
-        video: item.videoElement || null,
-        image: item.imageElement || null,
-        color: item.color || null, // AQUI: Captura a cor do item selecionado
-        pattern: null,
-        particles: particles
-    };
-
-    // 4. APLICA O EFEITO
-    if (state.editingZone) {
-        // Se estamos EDITANDO uma zona existente
-        state.editingZone.type = zoneData.type;
-        state.editingZone.video = zoneData.video;
-        state.editingZone.image = zoneData.image;
-        state.editingZone.color = zoneData.color; // AQUI: Transfere a cor para a zona editada
-        state.editingZone.particles = zoneData.particles;
-        state.editingZone.pattern = null;
-        
-        state.editingZone = null; // Só limpamos a edição DEPOIS de atribuir tudo
-    } else if (state.lastCirclePath.length > 0) {
-        // Se estamos CRIANDO uma zona nova a partir do pincel
-        state.activeZones.push(zoneData);
-    }
-
-    closeMenu();
-}
-
-function deleteEffect(e) {
-    if (e) e.stopPropagation();
-    if (state.editingZone) {
-        state.activeZones = state.activeZones.filter(z => z !== state.editingZone);
-        state.editingZone = null;
-    }
-    closeMenu();
-}
-
-function clearArea() {
-    state.activeZones = [];
-    state.gesturePoints = [];
-    state.pendingMenuPoint = null;
-    closeMenu();
-}
-
-// TODO: REMOVER
-function showMenu(x, y, isEditing = false) {
-    // SÓ resetamos a pilha se o menu estiver FECHADO.
-    // Se o menu já estiver aberto e você estiver navegando nas pastas, não mexemos na pilha.
-    if (!state.menuOpen) {
-        if (state.currentDrawMode === 'spell_object') {
-            state.currentMenuStack = [spellDatabase];
-        } else {
-            state.currentMenuStack = [menuDatabase];
-        }
-    }
-
-    renderEffectMenu();
-
-    state.menu.style.display = 'block';
-    const delBtn = document.getElementById('menu-delete-btn');
-    if (delBtn) delBtn.style.display = isEditing ? 'block' : 'none';
-
-    const rect = state.menu.getBoundingClientRect();
-    const padding = 20;
-    const marginFromShape = 40;
-
-    let targetLeft = x;
-    let targetTop = y;
-
-    const activePath = state.editingZone ? state.editingZone.path : (state.lastCirclePath.length > 0 ? state.lastCirclePath : null);
-
-    // Se for spell_object, ignoramos a lógica de Bounding Box para o menu não "pular" longe do clique
-    if (activePath && state.currentDrawMode !== 'spell_object') {
-        const bb = getBoundingBox(activePath);
-        targetLeft = bb.maxX + marginFromShape;
-        targetTop = bb.minY + (bb.height / 2) - (rect.height / 2);
-
-        if (targetLeft + rect.width + padding > window.innerWidth) {
-            targetLeft = bb.minX - rect.width - marginFromShape;
-        }
-        if (targetLeft < padding) {
-            targetLeft = bb.minX + (bb.width / 2) - (rect.width / 2);
-            targetTop = bb.maxY + marginFromShape;
-        }
-    }
-
-    const finalLeft = Math.max(padding, Math.min(targetLeft, window.innerWidth - rect.width - padding));
-    const finalTop = Math.max(padding, Math.min(targetTop, window.innerHeight - rect.height - padding));
-
-    state.menu.style.left = `${finalLeft}px`;
-    state.menu.style.top = `${finalTop}px`;
-    state.menuOpen = true; // Agora essa variável é vital
-}
-
-// TODO: REMOVER
-function closeMenu(e) {
-    if (e) e.stopPropagation();
-    state.menu.style.display = 'none';
-    state.menuOpen = false;
-    state.isDrawingCircle = false;
-    state.isDrawingShape = false;
-    state.gesturePoints = [];
-    state.pendingMenuPoint = null;
-    state.intersectionPoint = null;
-    state.lastCirclePath = [];
-    state.editingZone = null; // ← limpa a seleção ao fechar o menu
-}
-
-// TODO: REMOVER
-export function renderEffectMenu() {
-    // 1. VOLTAMOS PARA OS IDs ORIGINAIS QUE SEU CSS CONHECE
-    const grid = document.getElementById('effect-menu-grid');
-    const title = document.getElementById('effect-menu-title');
-    const backBtn = document.getElementById('menu-back-btn');
-    
-    const currentFolder = state.currentMenuStack[state.currentMenuStack.length - 1];
-    
-    if (title) title.textContent = currentFolder.label;
-    if (backBtn) backBtn.style.display = state.currentMenuStack.length > 1 ? 'block' : 'none';
-    
-    if (!grid) return; 
-    grid.innerHTML = '';
-    
-    currentFolder.children.forEach(item => {
-        // 2. VOLTAMOS A USAR <button> COMO NO SEU ORIGINAL
-        const btn = document.createElement('button');
-        btn.className = 'menu-item';
-        
-        // 3. VOLTAMOS COM AS CLASSES DENTRO DO SPAN
-        btn.innerHTML = `
-            <span class="menu-item-icon">${item.icon}</span>
-            <span class="menu-item-label">${item.label}</span>
-        `;
-        
-        if (item.type === 'folder') {
-            btn.onclick = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                state.currentMenuStack.push(item);
-                renderEffectMenu();
-            };
-        } else {
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                if (state.editingZone) {
-                    updateExistingEffect(state.editingZone, item);
-                } else if (state.currentDrawMode === 'spell_object') {
-                    applySpellObject(item); 
-                } else {
-                    setEffect(item, e);
-                }
-                closeMenu(null); 
-            };
-        }
-        grid.appendChild(btn);
-    });
-}
-
-// TODO: REMOVER
-function updateExistingEffect(zone, newItem) {
-    // 1. Atualiza o ID e o tipo
-    zone.id = newItem.id;
-    
-    // 2. Limpa o que tinha antes para não sobrepor
-    zone.video = null;
-    zone.image = null;
-    zone.color = null;
-
-    // 3. Aplica a nova cor se houver
-    if (newItem.color) {
-        zone.color = newItem.color;
-    }
-
-    // 4. Carrega o novo vídeo se houver
-    if (newItem.videoPath) {
-        const v = document.createElement('video');
-        v.src = newItem.videoPath;
-        v.muted = true;
-        v.loop = true;
-        v.play().catch(err => console.warn("Erro ao dar play no update:", err));
-        zone.video = v;
-    }
-
-    // 5. Se for uma magia circular (spell_object), atualiza os parâmetros de rotação e raio
-    if (zone.type === 'spell_object') {
-        zone.rotateSpeed = newItem.rotateSpeed || 0;
-        zone.opacity = newItem.opacity ?? 0.8;
-        zone.fade = newItem.fade !== undefined ? newItem.fade : false;
-        // Opcional: Descomente a linha abaixo se quiser que o raio mude para o padrão da nova magia
-        // zone.radius = newItem.radius || zone.radius; 
-    }
-}
-
-// TODO: REMOVER
-function menuGoBack(e) {
-    if (e) e.stopPropagation();
-    if (state.currentMenuStack.length > 1) {
-        state.currentMenuStack.pop(); // Sai da pasta (desempilha)
-        renderEffectMenu();     // Refaz o menu
-    }
-}
-
 function animate() {
     state.concentrationPulse += 0.08;
     
@@ -709,10 +454,12 @@ window.toggleSideMenu = toggleSideMenu;
 window.setBackground = setBackground;
 window.toggleGrid = toggleGrid;
 window.setDrawMode = setDrawMode;
-window.menuGoBack = menuGoBack;
-window.closeMenu = closeMenu;
-window.deleteEffect = deleteEffect;
-window.clearArea = clearArea;
+
+window.menuGoBack = RadialMenu.menuGoBack;
+window.closeMenu = RadialMenu.closeMenu;
+window.deleteEffect = RadialMenu.deleteEffect;
+window.clearArea = RadialMenu.clearArea;
+
 window.updateCharInitiative = updateCharInitiative;
 window.adjustZoom = adjustZoom;
 window.adjustTokenZoom = adjustTokenZoom;
