@@ -11,7 +11,8 @@ import {
     BASE_GRID_SIZE 
 } from './data/constants';
 import * as CombatLogic from './state/gameState';
-
+import * as Renderer from './engine/renderer'
+import { drawCharacter } from './engine/characterDrawer';
 
 // ======================================================
 // CANVAS E RENDERIZAÇÃO
@@ -1134,12 +1135,6 @@ function menuGoBack(e) {
     }
 }
 
-function getHpRingColor(percentage) {
-    if (percentage > 0.6) return '#4bdc7b';
-    if (percentage > 0.3) return '#e6c84f';
-    return '#d94b4b';
-}
-
 function drawStatusIcons(character, currentRadius) {
     // Se o personagem não tiver status ou a lista estiver vazia, encerra a função
     if (!character.statuses || character.statuses.length === 0) return;
@@ -1192,117 +1187,11 @@ function drawStatusIcons(character, currentRadius) {
     });
 }
 
-function drawCharacter(character) {
-    const currentRadius = character.radius * tokenScale;
-    const hpRatio = character.maxHp > 0 ? character.hp / character.maxHp : 0;
-    const ringColor = getHpRingColor(hpRatio);
-    const isDisabled = character.statuses.includes('unconscious') || character.statuses.includes('dead');
-    const isConcentrating = character.statuses.includes('concentration');
-
-    ctx.save();
-
-    // 1. ILUMINAÇÃO DE SELEÇÃO (Aumentada para ajudar no contraste)
-    if (selectedCharacter && selectedCharacter.id === character.id) {
-        ctx.shadowBlur = 30 * tokenScale;
-        ctx.shadowColor = 'white'; // Branco destaca em fundos escuros e claros
-    }
-
-    // 2. CORPO DO PERSONAGEM COM BORDA PRETA
-    ctx.filter = isDisabled ? 'grayscale(1)' : 'none';
-    ctx.globalAlpha = isDisabled ? 0.5 : 1;
-
-    ctx.beginPath();
-    ctx.fillStyle = character.color;
-    ctx.arc(character.x, character.y, currentRadius, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Borda preta sólida ao redor do círculo colorido
-    ctx.lineWidth = 2 * tokenScale;
-    ctx.strokeStyle = '#000000';
-    ctx.stroke();
-
-    ctx.shadowBlur = 0;
-    ctx.filter = 'none';
-    ctx.globalAlpha = 1;
-
-    // 3. ANEL DE VIDA COM CONTRASTE
-    // Desenha uma borda preta externa para o anel de HP
-    ctx.beginPath();
-    ctx.lineWidth = 8 * tokenScale; // Um pouco mais largo que o anel
-    ctx.strokeStyle = '#000000';
-    ctx.arc(character.x, character.y, currentRadius + (10 * tokenScale), -Math.PI / 2, Math.PI * 1.5);
-    ctx.stroke();
-
-    // Fundo cinza escuro do anel
-    ctx.beginPath();
-    ctx.lineWidth = 6 * tokenScale;
-    ctx.strokeStyle = '#333333';
-    ctx.arc(character.x, character.y, currentRadius + (10 * tokenScale), -Math.PI / 2, Math.PI * 1.5);
-    ctx.stroke();
-
-    // O Anel de HP colorido propriamente dito
-    ctx.beginPath();
-    ctx.lineWidth = 6 * tokenScale;
-    ctx.strokeStyle = ringColor;
-    ctx.lineCap = 'round';
-    ctx.arc(character.x, character.y, currentRadius + (10 * tokenScale), -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * hpRatio));
-    ctx.stroke();
-
-    // 4. TEXTO DO NOME COM "OUTLINE" (O mais importante para ler no branco)
-    const fontSize = Math.max(12, 16 * tokenScale);
-    ctx.font = `600 ${fontSize}px 'Cinzel', serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    const textY = character.y - currentRadius - (20 * tokenScale);
-
-    // Desenha o contorno preto do texto
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 4 * tokenScale;
-    ctx.lineJoin = 'round'; // Suaviza os cantos da borda do texto
-    ctx.strokeText(character.name, character.x, textY);
-
-    // Preenchimento branco (ou creme)
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(character.name, character.x, textY);
-
-    drawStatusIcons(character, currentRadius);
-    ctx.restore();
-}
-
-function drawBackground() {
-    const backgroundConfig = backgroundAssets[currentBackground];
-    
-    // Limpa o canvas antes de desenhar o fundo
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (!backgroundConfig || !backgroundConfig.image) return;
-
-    const backgroundImage = backgroundConfig.image;
-
-    // SÓ desenha se a imagem estiver carregada e pronta
-    if (backgroundImage.complete && backgroundImage.naturalWidth > 0) {
-        if (backgroundConfig.repeat) {
-            const pattern = ctx.createPattern(backgroundImage, 'repeat');
-            if (pattern) {
-                ctx.fillStyle = pattern;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-        } else {
-            // Desenha a imagem cobrindo todo o canvas
-            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
-        }
-    } else {
-        // Opcional: Desenha uma cor de fundo sólida enquanto a imagem carrega
-        ctx.fillStyle = "#1a1a1a";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-}
-
 function animate() {
     concentrationPulse += 0.08;
     
     // Fundo (Camada mais baixa)
-    drawBackground();
+    Renderer.drawBackground(ctx, canvas, backgroundAssets, currentBackground);
 
     // 1. DESENHA AS ZONAS DE EFEITO
     activeZones.forEach((zone) => {
@@ -1459,16 +1348,7 @@ function animate() {
 
     // 2. DESENHAR GRID
     if (showGrid) {
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-        let currentGridSize = BASE_GRID_SIZE * gridScale;
-        for (let x = 0; x < canvas.width; x += currentGridSize) {
-            ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height);
-        }
-        for (let y = 0; y < canvas.height; y += currentGridSize) {
-            ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
-        }
-        ctx.stroke();
+      Renderer.drawGrid(ctx, canvas, BASE_GRID_SIZE, gridScale);
     }
 
     // 3. DESENHA O HOLOFOTE (SPOTLIGHT)
@@ -1500,7 +1380,9 @@ function animate() {
     });
 
     // 4. DESENHA OS PERSONAGENS
-    characters.forEach(drawCharacter);
+    characters.forEach(char => {
+        drawCharacter(ctx, char, tokenScale, selectedCharacter, statusIcons);
+    });
 
     // 5. DESENHA INTERFACE DE GESTOS E PREVIEWS
     if (isDrawingShape && shapeStart && shapeEnd) {
