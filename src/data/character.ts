@@ -19,7 +19,7 @@ export const characters = [
         resources: { actionSurge: { current: 1, max: 1 }, secondWind: { current: 1, max: 1 } },
         spellSlots: {}, 
         statuses: ['concentration'], 
-        x: 160, y: 180, radius: 30, color: '#3498db', initiative: 0, isTurn: false 
+        x: 1000, y: 180, radius: 30, color: '#3498db', initiative: 0, isTurn: false 
     },
     { 
         id: 2, 
@@ -43,7 +43,7 @@ export const characters = [
             level3: { current: 1, max: 2 }
         },
         statuses: ['poisoned'], 
-        x: 280, y: 240, radius: 30, color: '#2ecc71', initiative: 0, isTurn: false 
+        x: 1000, y: 240, radius: 30, color: '#2ecc71', initiative: 0, isTurn: false 
     },
     { 
         id: 3, 
@@ -63,7 +63,7 @@ export const characters = [
         resources: { sneakAttackDice: '3d6' }, 
         spellSlots: {},
         statuses: ['prone'], 
-        x: 400, y: 180, radius: 30, color: '#9b59b6', initiative: 0, isTurn: false 
+        x: 1000, y: 180, radius: 30, color: '#9b59b6', initiative: 0, isTurn: false 
     },
     { 
         id: 4, 
@@ -87,7 +87,7 @@ export const characters = [
             level3: { current: 2, max: 2 }
         },
         statuses: [], 
-        x: 220, y: 320, radius: 30, color: '#e74c3c', initiative: 0, isTurn: false 
+        x: 1000, y: 320, radius: 30, color: '#e74c3c', initiative: 0, isTurn: false 
     },
     { 
         id: 5, 
@@ -109,6 +109,6 @@ export const characters = [
         resources: { rage: { current: 2, max: 3 } },
         spellSlots: {},
         statuses: [], 
-        x: 340, y: 120, radius: 30, color: '#e67e22', initiative: 0, isTurn: false 
+        x: 1000, y: 120, radius: 30, color: '#e67e22', initiative: 0, isTurn: false 
     }
 ];

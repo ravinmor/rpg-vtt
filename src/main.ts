@@ -62,6 +62,7 @@ const mouseTools = {
     getCharacterAtPosition,
     updateCharacterPanels,
     closeCharacterMenu,
+    openCharacterMenu,
     renderSideCharacterStatuses,
     renderEffectMenu: () => renderEffectMenu(),
     showMenu: (x, y, isEditing) => showMenu(x, y, isEditing)
@@ -414,11 +415,12 @@ function applySpellObject(spellData) {
         id: spellData.id,
         x: state.pendingSpellPoint.x,
         y: state.pendingSpellPoint.y,
-        radius: spellData.radius || 100, // Usa o valor do JSON ou 100 como padrão
+        radius: spellData.radius || 100,
         opacity: spellData.opacity || 0.8,
         rotation: 0,
         rotateSpeed: spellData.rotateSpeed || 0,
-        video: null
+        fade: spellData.fade !== undefined ? spellData.fade : true, // <--- ADICIONE ESTA LINHA
+        video: null as any
     };
 
     if (spellData.videoPath) {
@@ -646,6 +648,7 @@ function updateExistingEffect(zone, newItem) {
     if (zone.type === 'spell_object') {
         zone.rotateSpeed = newItem.rotateSpeed || 0;
         zone.opacity = newItem.opacity ?? 0.8;
+        zone.fade = newItem.fade !== undefined ? newItem.fade : false;
         // Opcional: Descomente a linha abaixo se quiser que o raio mude para o padrão da nova magia
         // zone.radius = newItem.radius || zone.radius; 
     }

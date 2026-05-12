@@ -31,8 +31,15 @@ export function drawBackground(ctx, canvas, backgroundAssets, currentBackground)
  * Desenha o Grid de referência
  */
 export function drawGrid(ctx, canvas, BASE_GRID_SIZE, gridScale) {
+    ctx.save(); // Salva o estado atual do canvas
     ctx.beginPath();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    
+    // Altere a cor/opacidade aqui
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; 
+    
+    // AUMENTE A ESPESSURA AQUI (Tente 2, 3 ou 4)
+    ctx.lineWidth = 4; 
+
     const currentGridSize = BASE_GRID_SIZE * gridScale;
     
     for (let x = 0; x < canvas.width; x += currentGridSize) {
@@ -41,5 +48,7 @@ export function drawGrid(ctx, canvas, BASE_GRID_SIZE, gridScale) {
     for (let y = 0; y < canvas.height; y += currentGridSize) {
         ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
     }
+    
     ctx.stroke();
+    ctx.restore();
 }
