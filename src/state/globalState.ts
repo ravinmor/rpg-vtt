@@ -1,0 +1,47 @@
+// src/state/globalState.ts
+import { menuDatabase } from '../data/menu';
+
+export const state = {
+    currentBackground: 'none', 
+    backgroundSelect: document.getElementById('background-select') as HTMLSelectElement,
+    editingZone: null as any,
+    isResizing: false,
+    resizeStartPoint: null as any,
+    originalEditPath: null as any,
+    gesturePoints: [] as any[],
+    activeZones: [] as any[],
+    isDrawingCircle: false,
+    menuOpen: false,
+    lastCirclePath: [] as any[],
+    intersectionPoint: null as any,
+    pendingMenuPoint: null as any,
+    selectedCharacter: null as any,
+    originalSpellCenter: { x: 0, y: 0 },
+    isDraggingToken: false,
+    tokenDragStart: null as any,
+    tokenHasMoved: false,
+    concentrationPulse: 0,
+    isDraggingCharacterMenu: false,
+    characterMenuDragOffset: { x: 0, y: 0 },
+    pendingSpellPoint: null as any,
+    currentDrawMode: 'brush',
+    isDrawingShape: false,
+    shapeStart: null as any,
+    shapeEnd: null as any,
+    isDraggingZone: false,
+    zoneDragStartPoint: null as any,
+    isDraggingEffectMenu: false,
+    effectMenuDragOffset: { x: 0, y: 0 },
+    gridScale: 1.0,
+    showGrid: false,
+    tokenScale: 1.0,
+    mouseDownTarget: null as any,
+    mouseDownPoint: null as any,
+    currentMenuStack: [menuDatabase],
+
+    // Capturamos os elementos DOM que o mouse precisa
+    sideMenu: document.getElementById('side-menu'),
+    characterMenu: document.getElementById('character-menu'),
+    menu: document.getElementById('radial-menu'),
+    characterMenuShell: document.getElementById('character-menu-shell')
+};

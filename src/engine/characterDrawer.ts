@@ -78,3 +78,33 @@ export function drawCharacter(ctx, character, tokenScale, selectedCharacter, sta
 
     ctx.restore();
 }
+
+// src/engine/characterDrawer.ts
+
+export function drawTurnHighlight(ctx, characters, tokenScale, concentrationPulse) {
+    characters.forEach(char => {
+        if (char.isTurn) {
+            const pulse = Math.sin(concentrationPulse) * 8; 
+            const currentRadius = char.radius * tokenScale;
+            
+            ctx.save();
+            const gradient = ctx.createRadialGradient(
+                char.x, char.y, currentRadius * 0.2,
+                char.x, char.y, currentRadius + 50 + pulse 
+            );
+            
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.7)'); 
+            gradient.addColorStop(0.3, 'rgba(240, 176, 48, 0.4)'); 
+            gradient.addColorStop(1, 'rgba(240, 176, 48, 0)');    
+
+            ctx.fillStyle = gradient;
+            ctx.shadowBlur = 25 + pulse;
+            ctx.shadowColor = 'rgba(240, 176, 48, 0.5)';
+            
+            ctx.beginPath();
+            ctx.arc(char.x, char.y, currentRadius + 40 + pulse, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    });
+}
