@@ -1,5 +1,6 @@
 // src/state/gameState.ts
 import { characters } from '../data/character';
+import { bestiaryDatabase } from '../data/bestiary';
 
 // Estado do Combate
 export let activeTurnIndex = -1;
@@ -88,4 +89,29 @@ export function removeStatus(characters, characterId, statusKey, callback) {
     if (!character) return;
     character.statuses = character.statuses.filter((s) => s !== statusKey);
     if (callback) callback();
+}
+
+export function spawnMonster(monsterId: string, x: number, y: number) {
+    const template = bestiaryDatabase.find(m => m.id === monsterId);
+    if (!template) {
+        console.error(`Monstro ${monsterId} não encontrado no bestiário.`);
+        return;
+    }
+
+    // Criamos a instância única para o mapa
+    const newMonsterInstance = {
+        ...JSON.parse(JSON.stringify(template)), // Clone para não editar o banco de dados
+        id: `${template.id}_${Date.now()}`,      // ID único
+        x: x,
+        y: y,
+        radius: 30 * (template.visuals.scale || 1),
+        statuses: [],
+        hp: template.combat.hp.max, // Inicializa HP
+        maxHp: template.combat.hp.max,
+        initiative: 0,
+        isMonster: true // Flag importante para a UI
+    };
+
+    characters.push(newMonsterInstance);
+    return newMonsterInstance;
 }

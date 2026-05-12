@@ -18,6 +18,7 @@ import * as UIDrawer from './engine/uiDrawer';
 import { initMouseEvents } from './events/mouseHandlers';
 import { state } from './state/globalState';
 import * as RadialMenu from './ui/radialMenu';
+import * as BestiaryUI from './ui/bestiaryUI';
 
 // ======================================================
 // CANVAS E RENDERIZAÇÃO
@@ -72,6 +73,8 @@ const mouseTools = {
 initMouseEvents(canvas, ctx, state, mouseTools);
 
 const statusIcons = loadStatusIcons();
+
+BestiaryUI.populateMonsterSelect();
 
 function toggleSideMenu() {
   sideMenu.classList.toggle('collapsed');
@@ -408,6 +411,25 @@ function updateCharInitiative(id, value) {
     });
 }
 
+function addMonsterFromSelect() {
+    const select = document.getElementById('monster-select') as HTMLSelectElement;
+    const monsterId = select.value;
+
+    if (!monsterId) {
+        alert("Selecione um monstro no bestiário primeiro!");
+        return;
+    }
+
+    // Spawna no centro da visão atual do Canvas
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+
+    CombatLogic.spawnMonster(monsterId, centerX, centerY);
+    
+    // Opcional: Feedback visual ou fechar menu se for mobile
+    console.log(`Monstro ${monsterId} conjurado no centro.`);
+}
+
 function animate() {
     state.concentrationPulse += 0.08;
     
@@ -448,7 +470,9 @@ renderSideCharacterStatuses(null);
 renderInitiativeList();
 animate();
 
-
+window.spawn = (id, x, y) => {
+    CombatLogic.spawnMonster(id, x, y);
+};
 // Expondo funções para o escopo global (necessário no Vite/Módulos)
 window.toggleSideMenu = toggleSideMenu;
 window.setBackground = setBackground;
@@ -464,6 +488,8 @@ window.updateCharInitiative = updateCharInitiative;
 window.adjustZoom = adjustZoom;
 window.adjustTokenZoom = adjustTokenZoom;
 window.closeCharacterMenu = closeCharacterMenu;
+window.addMonsterFromSelect = addMonsterFromSelect;
+window.addMonsterFromSelect = BestiaryUI.addMonsterFromSelect;
 
 window.nextTurn = () => CombatLogic.nextTurn((idx) => {
     CombatLogic.updateActiveTurn(idx);

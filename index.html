@@ -25,7 +25,6 @@
 
             <!-- FERRAMENTAS DE RITUAIS: aparecem no modo colapsado também -->
             <div class="ritual-tools-section">
-                <div class="panel-section-label full-only">Ferramentas</div>
                 <div class="ritual-tools-grid">
                     <button class="tool-btn active" onclick="setDrawMode('brush')" id="tool-brush" title="Pincel Livre — desenhe uma área fechada no mapa">
                         <span class="tool-icon">🖌️</span>
@@ -85,6 +84,19 @@
                         </select>
                     </div>
                 </div>
+
+                <div class="panel-section-label full-only">👾 Bestiário</div>
+                    <div class="panel-select-group full-only">
+                        <div class="panel-select-wrap">
+                            <select id="monster-select" class="panel-select">
+                                <option value="">— Carregando Bestiário... —</option>
+                            </select>
+                        </div>
+                        <button class="view-btn primary accent" style="width: 100%; margin-top: 8px;" onclick="addMonsterFromSelect()">
+                            ➕ Invocar no Centro
+                        </button>
+                    </div>
+                    <div class="panel-divider full-only"></div>
 
                 <!-- SEÇÃO: VISUALIZAÇÃO -->
                 <div class="panel-section-label">🔍 Visualização</div>

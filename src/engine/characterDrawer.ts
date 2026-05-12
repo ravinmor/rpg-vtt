@@ -76,6 +76,40 @@ export function drawCharacter(ctx, character, tokenScale, selectedCharacter, sta
     ctx.fillStyle = '#ffffff';
     ctx.fillText(character.name, character.x, textY);
 
+if (statusIcons && character.statuses && character.statuses.length > 0) {
+        const iconSize = 18 * tokenScale;
+        const spacing = 4 * tokenScale;
+        
+        // Filtra apenas status que têm imagem carregada
+        const drawableStatuses = character.statuses.filter(s => statusIcons[s]);
+        
+        if (drawableStatuses.length > 0) {
+            const totalW = (drawableStatuses.length * iconSize) + ((drawableStatuses.length - 1) * spacing);
+            
+            // Posicionamento: Y é o centro do char + raio + distância do anel
+            const iconsY = character.y + currentRadius + (20 * tokenScale);
+            let startX = character.x - (totalW / 2);
+
+            // Garante que os ícones fiquem coloridos e nítidos
+            ctx.filter = 'none';
+            ctx.globalAlpha = 1;
+
+            drawableStatuses.forEach((statusKey) => {
+                const img = statusIcons[statusKey];
+                if (img && img.complete && img.width > 0) {
+                    // Sombra projetada para destacar o ícone
+                    ctx.shadowColor = 'black';
+                    ctx.shadowBlur = 4;
+                    
+                    ctx.drawImage(img, startX, iconsY, iconSize, iconSize);
+                    
+                    ctx.shadowBlur = 0;
+                    startX += iconSize + spacing;
+                }
+            });
+        }
+    }
+
     ctx.restore();
 }
 

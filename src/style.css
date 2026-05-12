@@ -1070,3 +1070,16 @@ canvas {
     padding: 4px 6px;
     border: 1px solid transparent;
 }
+
+.view-btn.accent {
+    background: linear-gradient(135deg, #6200ea 0%, #3700b3 100%);
+    color: white;
+    border: 1px solid #7c4dff;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.view-btn.accent:hover {
+    background: #7c4dff;
+    transform: translateY(-1px);
+}
