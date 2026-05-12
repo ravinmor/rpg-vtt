@@ -808,16 +808,16 @@ canvas {
 }
 
 .character-menu-shell {
-    width: 540px;
+    width: 840px;
+    height: 420px; /* Defina uma altura fixa confortável */
     padding: 14px;
-    background: linear-gradient(180deg,
-        var(--color-character-panel-top) 0%,
-        var(--color-character-panel-bottom) 100%);
+    background: linear-gradient(180deg, var(--color-character-panel-top) 0%, var(--color-character-panel-bottom) 100%);
     border: 1px solid var(--color-character-panel-border);
     border-radius: 4px;
-    box-shadow:
-        inset 0 0 0 1px var(--color-effect-panel-inner),
-        0 14px 28px var(--color-shadow-strong);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Importante para o shell não crescer */
+    box-sizing: border-box;
 }
 
 .character-menu-header {
@@ -853,35 +853,37 @@ canvas {
 }
 
 .character-menu-content {
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
+    display: flex !important;
+    flex-direction: row !important; 
+    flex: 1;           /* Ocupa o espaço entre o header e o fim do shell */
+    min-height: 0;     /* Libera o scroll interno do flexbox */
+    gap: 20px;
+    overflow: hidden;  /* Garante que o conteúdo não vaze antes do body tratar */
 }
+
 .character-menu-preview {
-    width: 90px;
-    flex-shrink: 0;
+    flex: 0 0 200px;  /* Largura fixa para a coluna da imagem */
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    border: 1px solid var(--color-character-panel-border);
-    background: rgba(8,5,1,0.4);
-    padding: 10px;
-    border-radius: 3px;
+    /* Não colocamos overflow aqui para ela ficar estática */
 }
 .character-menu-token {
-    width: 64px;
-    height: 64px;
+    width: 240px !important; /* Diminuir o token é o que mais libera altura */
+    height: 240px !important;
     border-radius: 50%;
-    border: 2px solid var(--color-ornament-light);
-    box-shadow: 0 0 18px rgba(240,176,48,0.18);
+    border: 3px solid var(--color-ornament-light);
+    background-color: #000; 
+    display: block;
 }
 
 .character-menu-body {
+    flex: 1;
+    overflow-y: auto !important; /* Ativa a rolagem vertical */
+    padding-right: 10px;        /* Espaço para a barra de scroll não cobrir o texto */
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    flex: 1;
-    min-width: 0;
+    gap: 12px;
 }
 .character-menu-meta {
     display: flex;
@@ -960,21 +962,12 @@ canvas {
 .character-status-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    max-height: 160px;
-    overflow: auto;
-    padding-right: 4px;
+    gap: 4px;
+    padding-top: 5px;
 }
 .character-status-btn {
-    padding: 5px 8px;
-    border: 1px solid var(--color-status-chip-border);
-    background: var(--color-status-chip-bg);
-    color: var(--color-status-chip-text);
-    font-family: 'Cinzel', serif;
-    font-size: var(--text-xs);
-    cursor: pointer;
-    border-radius: 3px;
-    transition: all 0.18s ease;
+    padding: 2px 6px; /* Diminua o padding dos botões de status */
+    font-size: 11px;
 }
 .character-status-btn:hover {
     transform: translateY(-1px);
@@ -1051,11 +1044,9 @@ canvas {
 }
 .skills-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 3px;
-    max-height: 120px;
-    overflow-y: auto;
-    padding-right: 4px;
+    grid-template-columns: repeat(2, 1fr); /* Divide em duas colunas */
+    font-size: 12px; /* Diminuir um pouco a fonte ajuda a ganhar altura */
+    gap: 2px;
 }
 .skills-grid::-webkit-scrollbar { width: 4px; }
 .skills-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
@@ -1083,3 +1074,52 @@ canvas {
     background: #7c4dff;
     transform: translateY(-1px);
 }
+
+/* ─── BOTÕES DE STATUS RESTAURADOS ─── */
+.character-status-btn {
+    padding: 6px 10px; /* Um pouco mais de área de clique */
+    border: 1px solid var(--color-status-chip-border);
+    background: linear-gradient(180deg, var(--color-status-chip-bg) 0%, rgba(20, 12, 4, 0.95) 100%);
+    color: var(--color-status-chip-text);
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+}
+
+.character-status-btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--color-ornament-light);
+    color: var(--color-ornament-light);
+    background: linear-gradient(180deg, var(--color-btn-hover-start) 0%, var(--color-panel-bg-bottom) 100%);
+}
+
+.character-status-btn.active {
+    border-color: var(--color-status-chip-active);
+    color: #fff;
+    background: linear-gradient(180deg, #4a2a08 0%, #d49a36 100%);
+    box-shadow: 0 0 12px rgba(212, 154, 54, 0.3), inset 0 0 5px rgba(255,255,255,0.1);
+    text-shadow: 0 0 5px rgba(0,0,0,0.8);
+}
+
+.character-menu-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.character-menu-body::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.character-menu-body::-webkit-scrollbar-thumb {
+    background: var(--color-ornament-dark); /* Aquela cor marrom/dourada */
+    border-radius: 10px;
+}
+
+.character-menu-body::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ornament-mid);
+}
+

@@ -1,4 +1,5 @@
 // src/engine/characterDrawer.ts
+const autoCache = {};
 
 export function getHpRingColor(percentage) {
     if (percentage > 0.6) return '#4bdc7b';
@@ -25,33 +26,67 @@ export function drawCharacter(ctx, character, tokenScale, selectedCharacter, sta
 
     // 2. CÍRCULO BASE (TOKEN)
     ctx.beginPath();
-    ctx.fillStyle = character.color;
+    ctx.fillStyle = character.color || '#333';
     ctx.arc(character.x, character.y, currentRadius, 0, Math.PI * 2);
     ctx.fill();
+
+    // --- LÓGICA DE IMAGEM CENTRALIZADA ---
+    const imgPath = character.visuals?.token_img;
+    if (imgPath) {
+        // Se a imagem não estiver no cache, cria o objeto e inicia o download da pasta
+        if (!autoCache[imgPath]) {
+            const newImg = new Image();
+            newImg.src = imgPath;
+            autoCache[imgPath] = newImg;
+            // Opcional: newImg.onload = () => render(); // Se você tiver uma função global de render
+        }
+
+        const img = autoCache[imgPath];
+
+        // Só desenha se o navegador já terminou de carregar o arquivo
+        if (img.complete && img.width > 0) {
+            ctx.save();
+            // Corta a imagem em formato de círculo para caber no token
+            ctx.beginPath();
+            ctx.arc(character.x, character.y, currentRadius, 0, Math.PI * 2);
+            ctx.clip();
+
+            // O "Pulo do Gato" da Centralização:
+            // Desenhamos começando no (Centro - Raio) com o tamanho do Diâmetro (Raio * 2)
+            const size = currentRadius * 2;
+            ctx.drawImage(
+                img, 
+                character.x - currentRadius, 
+                character.y - currentRadius, 
+                size, 
+                size
+            );
+            ctx.restore();
+        }
+    }
+    // -------------------------------------
+
     ctx.lineWidth = 2 * tokenScale;
     ctx.strokeStyle = '#000000';
     ctx.stroke();
 
-    ctx.shadowBlur = 0; // Desliga sombra para não borrar os anéis
+    ctx.shadowBlur = 0; 
 
-    // 3. ANEL DE VIDA (Com bordas de contraste)
+    // 3. ANEL DE VIDA
     const ringRadius = currentRadius + (10 * tokenScale);
     
-    // Borda preta externa do anel (para visibilidade em fundos claros)
     ctx.beginPath();
     ctx.lineWidth = 9 * tokenScale;
     ctx.strokeStyle = '#000000';
     ctx.arc(character.x, character.y, ringRadius, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Fundo do anel (Cinza escuro)
     ctx.beginPath();
     ctx.lineWidth = 6 * tokenScale;
     ctx.strokeStyle = '#333333';
     ctx.arc(character.x, character.y, ringRadius, -Math.PI / 2, Math.PI * 1.5);
     ctx.stroke();
 
-    // Barra de vida colorida
     ctx.beginPath();
     ctx.lineWidth = 6 * tokenScale;
     ctx.strokeStyle = ringColor;
@@ -59,50 +94,41 @@ export function drawCharacter(ctx, character, tokenScale, selectedCharacter, sta
     ctx.arc(character.x, character.y, ringRadius, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * hpRatio));
     ctx.stroke();
 
-    // 4. NOME DO PERSONAGEM (Com Outline de alto contraste)
+    // 4. NOME DO PERSONAGEM
     const fontSize = Math.max(12, 16 * tokenScale);
     const textY = character.y - currentRadius - (25 * tokenScale);
 
     ctx.font = `600 ${fontSize}px 'Cinzel', serif`;
     ctx.textAlign = 'center';
-    ctx.lineJoin = 'round'; // Faz a borda do texto ser suave, não pontuda
+    ctx.lineJoin = 'round';
 
-    // Desenha a borda preta espessa primeiro
     ctx.lineWidth = 4 * tokenScale;
     ctx.strokeStyle = '#000000';
     ctx.strokeText(character.name, character.x, textY);
 
-    // Desenha o preenchimento branco por cima
     ctx.fillStyle = '#ffffff';
     ctx.fillText(character.name, character.x, textY);
 
-if (statusIcons && character.statuses && character.statuses.length > 0) {
+    // 5. ÍCONES DE STATUS
+    if (statusIcons && character.statuses && character.statuses.length > 0) {
         const iconSize = 18 * tokenScale;
         const spacing = 4 * tokenScale;
-        
-        // Filtra apenas status que têm imagem carregada
         const drawableStatuses = character.statuses.filter(s => statusIcons[s]);
         
         if (drawableStatuses.length > 0) {
             const totalW = (drawableStatuses.length * iconSize) + ((drawableStatuses.length - 1) * spacing);
-            
-            // Posicionamento: Y é o centro do char + raio + distância do anel
             const iconsY = character.y + currentRadius + (20 * tokenScale);
             let startX = character.x - (totalW / 2);
 
-            // Garante que os ícones fiquem coloridos e nítidos
             ctx.filter = 'none';
             ctx.globalAlpha = 1;
 
             drawableStatuses.forEach((statusKey) => {
-                const img = statusIcons[statusKey];
-                if (img && img.complete && img.width > 0) {
-                    // Sombra projetada para destacar o ícone
+                const sImg = statusIcons[statusKey];
+                if (sImg && sImg.complete && sImg.width > 0) {
                     ctx.shadowColor = 'black';
                     ctx.shadowBlur = 4;
-                    
-                    ctx.drawImage(img, startX, iconsY, iconSize, iconSize);
-                    
+                    ctx.drawImage(sImg, startX, iconsY, iconSize, iconSize);
                     ctx.shadowBlur = 0;
                     startX += iconSize + spacing;
                 }

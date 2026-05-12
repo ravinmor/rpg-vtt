@@ -299,9 +299,22 @@ function updateCharacterPanels() {
 
 function openCharacterMenu(character, x, y) {
     state.selectedCharacter = character;
+    
+    // 1. Atualiza os textos, atributos e a IMAGEM do JSON
     updateCharacterPanels();
-    characterMenu.style.display = 'block';
 
+    // 2. Garante que a imagem do JSON apareça na div de token do menu
+    const tokenImgDiv = document.getElementById('character-menu-token');
+    if (tokenImgDiv && character.visuals && character.visuals.token_img) {
+        tokenImgDiv.style.backgroundImage = `url('${character.visuals.token_img}')`;
+        tokenImgDiv.style.backgroundSize = 'cover';
+        tokenImgDiv.style.backgroundPosition = 'center';
+    }
+
+    // 3. Muda para 'flex' para o seu layout widescreen (horizontal) não quebrar
+    characterMenu.style.display = 'flex';
+
+    // 4. Posicionamento inteligente na tela
     const rect = characterMenu.getBoundingClientRect();
     const padding = 18;
     const left = Math.min(Math.max(x + 18, padding), window.innerWidth - rect.width - padding);
