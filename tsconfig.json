@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "allowJs": true,           // Permite que arquivos .js coexistam com .ts
+    "checkJs": false,          // Não verifica erros nos seus .js antigos
+    "noImplicitAny": false,    // Não reclama se você não tipar algo (assume 'any')
+    "strict": false            // Desativa regras rigorosas temporariamente
+  }
+}

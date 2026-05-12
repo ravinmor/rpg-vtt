@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>RPG VTT</title>
+    <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+
+    <div id="side-menu">
+        <div class="panel-body">
+            <div class="panel-top-ornament"></div>
+
+            <!-- HEADER: visível sempre, mesmo colapsado -->
+            <div class="panel-header">
+                <div class="panel-header-inner">
+                    <div class="panel-crest"><span>⚜</span></div>
+                    <div class="panel-title-block">
+                        <div class="panel-title">Painel do Mestre</div>
+                        <div class="panel-subtitle">Controles da Sessão</div>
+                    </div>
+                    <button class="panel-toggle-btn" onclick="toggleSideMenu()" title="Recolher">❮</button>
+                </div>
+            </div>
+
+            <!-- FERRAMENTAS DE RITUAIS: aparecem no modo colapsado também -->
+            <div class="ritual-tools-section">
+                <div class="panel-section-label full-only">Ferramentas</div>
+                <div class="ritual-tools-grid">
+                    <button class="tool-btn active" onclick="setDrawMode('brush')" id="tool-brush" title="Pincel Livre — desenhe uma área fechada no mapa">
+                        <span class="tool-icon">🖌️</span>
+                        <span class="tool-label full-only">Pincel</span>
+                    </button>
+                    <button class="tool-btn" onclick="setDrawMode('square')" id="tool-square" title="Área Quadrada — clique e arraste para criar">
+                        <span class="tool-icon">⬛</span>
+                        <span class="tool-label full-only">Quadrado</span>
+                    </button>
+                    <button class="tool-btn" onclick="setDrawMode('circle')" id="tool-circle" title="Área Circular — clique e arraste para criar">
+                        <span class="tool-icon">⭕</span>
+                        <span class="tool-label full-only">Círculo</span>
+                    </button>
+                    <button class="tool-btn" onclick="setDrawMode('triangle')" id="tool-triangle" title="Área Triangular — clique e arraste para criar">
+                        <span class="tool-icon">🔺</span>
+                        <span class="tool-label full-only">Triângulo</span>
+                    </button>
+                    <button class="tool-btn" onclick="setDrawMode('spell_object')" id="tool-spell_object" title="Magia Individual — clique no mapa para posicionar">
+                        <span class="tool-icon">✨</span>
+                        <span class="tool-label full-only">Magia</span>
+                    </button>
+                    <button class="tool-btn danger-tool" onclick="clearArea()" title="Limpar Tudo — remove todos os efeitos e zonas">
+                        <span class="tool-icon">🗑️</span>
+                        <span class="tool-label full-only">Limpar</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel-divider full-only"></div>
+
+            <!-- CONTEÚDO EXPANDIDO: só aparece quando o menu está aberto -->
+            <div class="panel-scroll full-only">
+
+                <!-- SEÇÃO: CENA -->
+                <div class="panel-section-label">🎨 Cenário</div>
+                <div class="panel-select-group">
+                    <div class="panel-select-wrap">
+                        <select id="background-select" class="panel-select" onchange="setBackground(this.value)">
+                            <option value="none">— Sem fundo —</option>
+                            <optgroup label="Exterior">
+                                <option value="grass">🌿 Grama</option>
+                                <option value="road">🛣️ Estrada</option>
+                                <option value="forest">🌲 Floresta</option>
+                                <option value="sand">🏜️ Areia / Deserto</option>
+                                <option value="snow">❄️ Neve</option>
+                                <option value="ruins">🏚️ Ruínas</option>
+                            </optgroup>
+                            <optgroup label="Localidades">
+                                <option value="village">🏘️ Vila</option>
+                                <option value="tavern">🍺 Taverna</option>
+                                <option value="castle">🏰 Castelo</option>
+                            </optgroup>
+                            <optgroup label="Interior / Subterrâneo">
+                                <option value="dungeon">⛓️ Masmorra</option>
+                                <option value="cave">🕳️ Caverna</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO: VISUALIZAÇÃO -->
+                <div class="panel-section-label">🔍 Visualização</div>
+                <div class="view-control-rows">
+                    <div class="view-control-row">
+                        <span class="view-control-label">Grid</span>
+                        <div class="view-control-btns">
+                            <button class="view-btn" onclick="toggleGrid()" id="btn-grid" title="Ativar/desativar grade de referência"># Grade</button>
+                        </div>
+                    </div>
+                    <div class="view-control-row">
+                        <span class="view-control-label">Zoom</span>
+                        <div class="view-control-btns">
+                            <button class="view-btn" onclick="adjustZoom(-1)" title="Restaurar zoom padrão">↺ Reset</button>
+                            <button class="view-btn" onclick="adjustZoom(-0.1)" title="Diminuir zoom">− Menos</button>
+                            <button class="view-btn" onclick="adjustZoom(0.1)" title="Aumentar zoom">+ Mais</button>
+                        </div>
+                    </div>
+                    <div class="view-control-row">
+                        <span class="view-control-label">Tokens</span>
+                        <div class="view-control-btns">
+                            <button class="view-btn" onclick="adjustTokenZoom(-1)" title="Restaurar tamanho padrão dos tokens">↺ Reset</button>
+                            <button class="view-btn" onclick="adjustTokenZoom(-0.1)" title="Diminuir tokens">− Menor</button>
+                            <button class="view-btn" onclick="adjustTokenZoom(0.1)" title="Aumentar tokens">+ Maior</button>
+                            <button class="view-btn accent" onclick="adjustTokenZoom(2)" title="Tamanho para criaturas grandes">🐉 Grande</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-divider"></div>
+
+                <!-- SEÇÃO: COMBATE -->
+                <div class="panel-section-label">⚔️ Ordem de Combate</div>
+                <div id="initiative-container" class="side-status-card">
+                    <div id="initiative-list"></div>
+                    <div class="initiative-controls">
+                        <button class="combat-btn" onclick="sortInitiative()" title="Ordenar por iniciativa">⚡ Ordenar</button>
+                        <button class="combat-btn" onclick="resetCombat()" title="Resetar combate">↺ Reset</button>
+                        <button class="combat-btn" onclick="prevTurn()" title="Turno anterior">◀ Voltar</button>
+                        <button class="combat-btn primary" onclick="nextTurn()" title="Próximo turno">▶ Próximo</button>
+                    </div>
+                </div>
+
+                <div class="panel-divider"></div>
+
+                <!-- SEÇÃO: PERSONAGEM SELECIONADO -->
+                <div class="panel-section-label">🧙 Personagem Selecionado</div>
+                <div class="side-character-card">
+                    <div class="side-char-name" id="side-character-name">Nenhum selecionado</div>
+                    <div class="side-char-statuses" id="side-character-statuses"></div>
+                </div>
+
+            </div>
+
+            <div class="panel-bottom-ornament full-only"></div>
+        </div>
+    </div>
+
+    <div id="radial-menu">
+        <div class="effect-menu-shell">
+            <div class="effect-menu-header">
+                <button class="effect-menu-back" id="menu-back-btn" onclick="menuGoBack(event)" style="display:none;" title="Voltar">↩</button>
+                <div class="effect-menu-title" id="effect-menu-title">Rituais de Campo</div>
+                <button class="effect-menu-close" onclick="closeMenu(event)" title="Fechar">✕</button>
+            </div>
+            
+            <div class="effect-menu-grid" id="effect-menu-grid">
+                </div>
+            
+            
+            <button class="menu-item"" id="menu-delete-btn" onclick="deleteEffect(event)">
+                <span class="menu-item-icon">🗑️</span>
+                <span class="menu-item-label">Remover</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="effect-menu-shell" id="effect-menu" style="display: none;">
+        <div class="effect-menu-header">
+            <span id="menu-label">Rituais</span>
+            <button class="close-btn" onclick="closeMenu()">✕</button>
+        </div>
+        <div id="menu-content-area" class="effect-menu-grid">
+            </div>
+    </div>
+
+    <div id="character-menu">
+        <div class="character-menu-shell" id="character-menu-shell">
+            <div class="character-menu-header" id="character-menu-header">
+                <div class="character-menu-title" id="character-menu-name">Personagem</div>
+                <button class="character-menu-close" onclick="closeCharacterMenu(event)" title="Fechar">✕</button>
+            </div>
+            <div class="character-menu-content">
+                <div class="character-menu-preview">
+                    <div class="character-menu-token" id="character-menu-token"></div>
+                </div>
+                <div class="character-menu-body">
+                    <div class="character-menu-meta">
+                        <div class="character-menu-stat">
+                            <span class="character-menu-stat-label">Classe</span>
+                            <span class="character-menu-class" id="character-menu-class">-</span>
+                        </div>
+                        <div class="character-menu-stat">
+                            <span class="character-menu-stat-label">HP</span>
+                            <span class="character-menu-stat-value" id="character-menu-hp">0 / 0</span>
+                        </div>
+                        
+                        <div class="combat-stats-grid" id="character-combat-stats"></div>
+                        <div class="attributes-grid" id="character-attributes"></div>
+                        
+                        <div class="character-menu-details">
+                            <div id="character-resources" class="resource-list"></div>
+                            <div id="character-skills" class="skills-list"></div>
+                        </div>
+                    </div>
+                    <div class="character-menu-actions">
+                        <input id="character-hp-input" class="character-menu-input" type="number" min="0" step="1" value="5">
+                        <button class="character-menu-btn danger" onclick="applyCharacterHp(-1)">-</button>
+                        <button class="character-menu-btn" onclick="applyCharacterHp(1)">+</button>
+                    </div>
+                    <div class="character-menu-status-block">
+                        <div class="character-menu-subtitle">Status</div>
+                        <div class="character-status-grid" id="character-status-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="vttCanvas"></canvas>
+    <script type="module" src="src/main.ts"></script>
+</body>
+</html>
