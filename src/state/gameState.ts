@@ -115,3 +115,13 @@ export function spawnMonster(monsterId: string, x: number, y: number) {
     characters.push(newMonsterInstance);
     return newMonsterInstance;
 }
+
+export function deleteCharacter(characterId: string) {
+    // Filtra o array removendo o personagem com o ID correspondente
+    const index = characters.findIndex(c => c.id === characterId);
+    if (index !== -1) {
+        characters.splice(index, 1);
+        return true;
+    }
+    return false;
+}

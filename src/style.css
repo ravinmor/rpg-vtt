@@ -870,8 +870,7 @@ canvas {
 }
 .character-menu-token {
     width: 240px !important; /* Diminuir o token é o que mais libera altura */
-    height: 240px !important;
-    border-radius: 50%;
+    height: 340px !important;
     border: 3px solid var(--color-ornament-light);
     background-color: #000; 
     display: block;
@@ -1123,3 +1122,19 @@ canvas {
     background: var(--color-ornament-mid);
 }
 
+.character-menu-btn.danger-outline {
+    background: rgba(138, 40, 24, 0.2);
+    border: 1px solid #8a2818;
+    color: #e07858;
+    margin-top: 10px;
+    width: 100%;
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.character-menu-btn.danger-outline:hover {
+    background: #8a2818;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(138, 40, 24, 0.4);
+}

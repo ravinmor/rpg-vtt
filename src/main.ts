@@ -367,6 +367,26 @@ function startEffectMenuDrag(e) {
     e.stopPropagation();
 }
 
+export function removeMonsterFromMap() {
+    const character = state.selectedCharacter;
+    if (!character) return;
+
+    // Remove do array de dados
+    const success = CombatLogic.deleteCharacter(character.id);
+
+    if (success) {
+        // Limpa a seleção
+        state.selectedCharacter = null;
+        
+        // Fecha o menu (supondo que o elemento characterMenu está acessível aqui)
+        const charMenu = document.getElementById('character-menu');
+        if (charMenu) charMenu.style.display = 'none';
+
+        // Opcional: Se você tiver uma função de renderização global para atualizar o canvas
+        // render(); 
+    }
+}
+
 // Vincula o evento ao menu
 document.querySelector('.effect-menu-shell').addEventListener('mousedown', startEffectMenuDrag);
 
@@ -530,3 +550,6 @@ window.resetCombat = () => {
         renderInitiativeList();
     });
 };
+
+
+window.removeMonsterFromMap = removeMonsterFromMap;
