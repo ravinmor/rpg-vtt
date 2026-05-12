@@ -96,7 +96,19 @@
                             ➕ Invocar no Centro
                         </button>
                     </div>
-                    <div class="panel-divider full-only"></div>
+                <div class="panel-divider full-only"></div>
+
+                <div class="panel-section-label full-only">🛡️ Jogadores</div>
+                <div class="panel-select-group full-only">
+                    <input type="file" id="player-import-input" style="display: none;" accept=".json">
+                    
+                    <button class="view-btn accent" style="width: 100%;" onclick="document.getElementById('player-import-input').click()">
+                        📥 Importar Ficha (.json)
+                    </button>
+                    <p class="panel-subtitle" style="font-size: 10px; margin-top: 5px;">
+                        Selecione o arquivo JSON do personagem.
+                    </p>
+                </div>
 
                 <!-- SEÇÃO: VISUALIZAÇÃO -->
                 <div class="panel-section-label">🔍 Visualização</div>

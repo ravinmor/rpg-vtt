@@ -1470,7 +1470,7 @@ export const bestiaryDatabase: Monster[] = [
     "challenge_rating": "20",
     "combat": { "hp": { "current": 297, "max": 297 }, "ca": 20, "speed": "40ft, voo 80ft, escavação 40ft", "initiative_mod": 0 },
     "attributes": { "str": 27, "dex": 10, "con": 25, "int": 16, "wis": 15, "cha": 19 },
-    "visuals": { "token_img": "/tokens/enemies/brass_dragon.jpg", "aura_preset": "heat_haze", "scale": 2.5 },
+    "visuals": { "token_img": "/tokens/enemies/ancient_brass_dragon.jpg", "aura_preset": "heat_haze", "scale": 2.5 },
     "actions": [
       { "name": "Sopro de Fogo", "desc": "Linha de 27m causando 16d6 de dano de fogo." },
       { "name": "Sopro de Sono", "desc": "Cone de 27m, criaturas devem passar em TR de CON ou caem inconscientes." }
@@ -1485,7 +1485,7 @@ export const bestiaryDatabase: Monster[] = [
     "challenge_rating": "24",
     "combat": { "hp": { "current": 546, "max": 546 }, "ca": 22, "speed": "40ft, voo 80ft, natação 40ft", "initiative_mod": 2 },
     "attributes": { "str": 30, "dex": 14, "con": 29, "int": 18, "wis": 17, "cha": 28 },
-    "visuals": { "token_img": "/tokens/enemies/gold_dragon.jpg", "aura_preset": "holy_aura", "scale": 3.0 },
+    "visuals": { "token_img": "/tokens/enemies/ancient_gold_dragon.jpg", "aura_preset": "holy_aura", "scale": 3.0 },
     "actions": [
       { "name": "Sopro de Fogo", "desc": "Cone de 27m causando 13d10 de dano de fogo." },
       { "name": "Sopro de Enfraquecimento", "desc": "Criaturas no cone tem desvantagem em jogadas de Força." }
@@ -1500,7 +1500,7 @@ export const bestiaryDatabase: Monster[] = [
     "challenge_rating": "23",
     "combat": { "hp": { "current": 487, "max": 487 }, "ca": 22, "speed": "40ft, voo 80ft", "initiative_mod": 0 },
     "attributes": { "str": 30, "dex": 10, "con": 29, "int": 18, "wis": 15, "cha": 23 },
-    "visuals": { "token_img": "/tokens/enemies/silver_dragon.jpg", "aura_preset": "cold_aura", "scale": 2.5 },
+    "visuals": { "token_img": "/tokens/enemies/ancient_silver_dragon.jpg", "aura_preset": "cold_aura", "scale": 2.5 },
     "actions": [
       { "name": "Sopro de Frio", "desc": "Cone de 27m causando 15d8 de dano de frio." },
       { "name": "Sopro de Paralisia", "desc": "Criaturas no cone devem passar em TR de CON ou ficam paralisadas." }

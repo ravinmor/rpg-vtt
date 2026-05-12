@@ -125,3 +125,11 @@ export function deleteCharacter(characterId: string) {
     }
     return false;
 }
+
+export function registerNewCharacter(characterData: any) {
+    // Aqui você pode adicionar validações se necessário
+    characters.push(characterData);
+    
+    // Se você tiver um sistema de eventos para avisar que o estado mudou:
+    // emitStateChange(); 
+}
