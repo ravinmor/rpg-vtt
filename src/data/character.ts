@@ -19,7 +19,7 @@ export const characters: Character[] = [
         resources: { actionSurge: { current: 1, max: 1 }, secondWind: { current: 1, max: 1 } },
         spellSlots: {}, 
         statuses: ['concentration'], 
-        x: 1000, y: 180, radius: 30, color: '#3498db', initiative: 0, isTurn: false,
+        x: 1100, y: 300, radius: 30, color: '#3498db', initiative: 0, isTurn: false,
         visuals: {
             token_img: 'https://i.etsystatic.com/45504153/r/il/85124d/6064743807/il_1588xN.6064743807_6kkg.jpg',
             aura_preset: 'steel_blue',
@@ -48,7 +48,7 @@ export const characters: Character[] = [
             level3: { current: 1, max: 2 }
         },
         statuses: ['poisoned'], 
-        x: 1000, y: 240, radius: 30, color: '#2ecc71', initiative: 0, isTurn: false,
+        x: 800, y: 440, radius: 30, color: '#2ecc71', initiative: 0, isTurn: false,
         visuals: {
             token_img: 'https://static.wixstatic.com/media/de04c6_dacda57cc90144489ab218e3061f9195~mv2.png/v1/fill/w_602,h_831,al_c,q_90/de04c6_dacda57cc90144489ab218e3061f9195~mv2.png',
             aura_preset: 'holy_light',
@@ -73,7 +73,7 @@ export const characters: Character[] = [
         resources: { sneakAttackDice: '3d6' }, 
         spellSlots: {},
         statuses: ['prone'], 
-        x: 1000, y: 180, radius: 30, color: '#9b59b6', initiative: 0, isTurn: false,
+        x: 700, y: 300, radius: 30, color: '#9b59b6', initiative: 0, isTurn: false,
         visuals: {
             token_img: 'https://static0.cbrimages.com/wordpress/wp-content/uploads/2021/02/DD-Assassin-Rogue.jpg?q=50&fit=crop&w=825&dpr=1.5',
             aura_preset: 'shadow_mist',
@@ -102,7 +102,7 @@ export const characters: Character[] = [
             level3: { current: 2, max: 2 }
         },
         statuses: [], 
-        x: 1000, y: 320, radius: 30, color: '#e74c3c', initiative: 0, isTurn: false,
+        x: 1000, y: 440, radius: 30, color: '#e74c3c', initiative: 0, isTurn: false,
         visuals: {
             token_img: 'https://www.enworld.org/attachments/th-18483468401-765x1078-png.133719/',
             aura_preset: 'arcane_rings',
@@ -129,7 +129,7 @@ export const characters: Character[] = [
         resources: { rage: { current: 2, max: 3 } },
         spellSlots: {},
         statuses: [], 
-        x: 1000, y: 120, radius: 30, color: '#e67e22', initiative: 0, isTurn: false,
+        x: 900, y: 200, radius: 30, color: '#e67e22', initiative: 0, isTurn: false,
         visuals: {
             token_img: 'https://i0.wp.com/standsinthefire.com/wp-content/uploads/2014/09/conan-the-barbarian.jpg',
             aura_preset: 'primal_rage',

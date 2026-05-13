@@ -77,12 +77,14 @@ const statusIcons = loadStatusIcons();
 
 BestiaryUI.populateMonsterSelect();
 
-const savedChars = loadFromLocalStorage();
-if (savedChars.length > 0) {
-    // IMPORTANTE: Limpar o array original mantendo a mesma referência
-    characters.splice(0, characters.length); 
-    characters.push(...savedChars);
-    console.log("Dados carregados do LocalStorage:", characters.length, "personagens");
+if (characters.length === 0) {
+    const savedChars = loadFromLocalStorage();
+    if (savedChars.length > 0) {
+        characters.push(...savedChars);
+        console.log("Dados carregados do LocalStorage:", characters.length, "personagens");
+    }
+} else {
+    console.log("Usando personagens do character.ts:", characters.length, "personagens");
 }
 
 function toggleSideMenu() {
