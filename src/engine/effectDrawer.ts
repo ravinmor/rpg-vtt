@@ -134,33 +134,85 @@ function renderSpellObject(ctx, zone, editingZone) {
 }
 
 function renderDrawnArea(ctx, canvas, zone, editingZone) {
+    // Proteção contra caminhos inválidos
+    if (!zone.path || zone.path.length < 2) return;
+
+    // 1. Calcula os limites do desenho e as dimensões ANTES de tudo
+    const bb = getBoundingBox(zone.path);
+    const width = bb.maxX - bb.minX;
+    const height = bb.maxY - bb.minY;
+
+    // 2. Traça o caminho da forma desenhada
     ctx.beginPath();
     ctx.moveTo(zone.path[0].x, zone.path[0].y);
     zone.path.forEach((p) => ctx.lineTo(p.x, p.y));
     ctx.closePath();
-    ctx.clip();
 
+    // 3. Salva o contexto ANTES de cortar a área (MUITO IMPORTANTE)
+    ctx.save();
+    ctx.clip(); // Corta os vídeos/cores para não vazarem do desenho
+
+    // Preenchimento interno
+    ctx.globalAlpha = zone.opacity ?? 0.8;
     if (zone.video) {
-        ctx.drawImage(zone.video, 0, 0, canvas.width, canvas.height);
+        // Renderiza o vídeo usando o tamanho exato da Bounding Box (não a tela inteira)
+        ctx.drawImage(zone.video, bb.minX, bb.minY, width, height);
     } else if (zone.image && zone.image.complete) {
         if (!zone.pattern) zone.pattern = ctx.createPattern(zone.image, 'repeat');
         if (zone.pattern) {
+            ctx.translate(bb.minX, bb.minY);
             ctx.fillStyle = zone.pattern;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, width, height);
+            ctx.translate(-bb.minX, -bb.minY);
         }
     } else if (zone.color) {
         ctx.fillStyle = zone.color;
         ctx.fill();
     }
-    
-    // Efeito especial de Vagalumes
+
+    // 4. Efeito especial de Vagalumes
     if (zone.type === 'fireflies' && zone.particles) {
         renderParticles(ctx, zone);
     }
 
-    // Borda da área
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    // 5. RESTAURA o contexto para desfazer o "clip()". 
+    // A partir daqui, as coisas podem ser desenhadas fora dos limites do traço.
+    ctx.restore();
+
+    // 6. Borda da área (agora com opacidade maior para você enxergar e sem ser cortada)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 2;
     ctx.stroke();
+
+    // 7. Renderiza as Linhas e Handles de Edição se estiver selecionada
+    if (editingZone === zone) {
+        ctx.save();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        
+        // Usa as coordenadas e o width/height calculados lá no começo
+        ctx.strokeRect(bb.minX, bb.minY, width, height);
+        ctx.setLineDash([]);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+
+        // Define as posições das 4 alças nos cantos do retângulo limite
+        const handles = [
+            {x: bb.minX, y: bb.minY}, {x: bb.maxX, y: bb.minY},
+            {x: bb.maxX, y: bb.maxY}, {x: bb.minX, y: bb.maxY}
+        ];
+
+        handles.forEach(h => {
+            ctx.beginPath();
+            ctx.rect(h.x - 5, h.y - 5, 10, 10);
+            ctx.fill();
+            ctx.stroke();
+        });
+        ctx.restore();
+    }
 }
 
 function renderParticles(ctx, zone) {

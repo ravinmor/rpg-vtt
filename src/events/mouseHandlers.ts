@@ -16,119 +16,145 @@ export function initMouseEvents(canvas, ctx, state, tools) {
         const mouseY = coords.y;
         state.mouseDownPoint = coords;
 
-        // --- LÓGICA DE EDIÇÃO DE ZONA ---
-        if (state.editingZone) {
-            if (state.editingZone.type === 'spell_object') {
-                const handleX = state.editingZone.x + state.editingZone.radius;
-                const handleY = state.editingZone.y;
-                if (Math.hypot(mouseX - handleX, mouseY - handleY) < 15) {
-                    state.isResizing = true;
-                    state.resizeStartPoint = { x: mouseX, y: mouseY };
-                    state.menu.style.display = 'none';
-                    return;
-                }
-                if (Math.hypot(mouseX - state.editingZone.x, mouseY - state.editingZone.y) <= state.editingZone.radius) {
-                    state.isDraggingZone = true;
-                    state.zoneDragStartPoint = { x: mouseX, y: mouseY };
-                    state.originalSpellCenter = { x: state.editingZone.x, y: state.editingZone.y }; 
-                    state.menu.style.display = 'none';
-                    return;
-                }
-            } else if (state.editingZone.path) {
-                const bb = getBoundingBox(state.editingZone.path);
-                const handles = [
-                    {x: bb.minX, y: bb.minY}, {x: bb.maxX, y: bb.minY},
-                    {x: bb.maxX, y: bb.maxY}, {x: bb.minX, y: bb.maxY}
-                ];
-                for (let i = 0; i < 4; i++) {
-                    if (Math.hypot(mouseX - handles[i].x, mouseY - handles[i].y) < 15) {
-                        state.isResizing = true;
-                        state.resizeStartPoint = {x: mouseX, y: mouseY};
-                        state.originalEditPath = JSON.parse(JSON.stringify(state.editingZone.path));
-                        state.menu.style.display = 'none';
-                        return;
-                    }
-                }
-                if (isPointInPolygon({x: mouseX, y: mouseY}, state.editingZone.path)) {
-                    state.isDraggingZone = true;
-                    state.zoneDragStartPoint = { x: mouseX, y: mouseY };
-                    state.originalEditPath = JSON.parse(JSON.stringify(state.editingZone.path));
-                    state.menu.style.display = 'none';
-                    return;
-                }
-            }
-            state.editingZone = null;
-        }
-
-        // --- SELEÇÃO DE TOKEN ---
-        const clickedCharacter = tools.getCharacterAtPosition(mouseX, mouseY);
-        if (clickedCharacter) {
-            state.selectedCharacter = clickedCharacter;
-            tools.updateCharacterPanels();
-            state.isDraggingToken = true;
-            state.tokenDragStart = coords;
-            state.tokenHasMoved = false;
-            state.mouseDownTarget = 'character';
-            tools.closeCharacterMenu();
-            return;
-        }
-
-        // --- CLIQUE EM ZONA EXISTENTE ---
-        let clickedZone = null;
-        for (let i = state.activeZones.length - 1; i >= 0; i--) {
-            const zone = state.activeZones[i];
+        // ==========================================
+        // MODO SELEÇÃO (Interagir com o que já existe)
+        // ==========================================
+        if (state.currentDrawMode === 'select') {
             
-            if (zone.type === 'spell_object') {
-                // NOVO: Só deixa selecionar magias se a ferramenta for Magia
-                if (state.currentDrawMode === 'spell_object') {
-                    if (Math.hypot(mouseX - zone.x, mouseY - zone.y) <= zone.radius) {
-                        clickedZone = zone;
-                        break;
+            // --- 1. DETECÇÃO DE CLIQUES NA ZONA JÁ EM EDIÇÃO ---
+            if (state.editingZone) {
+                // LÓGICA PARA CÍRCULOS (spell_object)
+                if (state.editingZone.type === 'spell_object') {
+                    // Posição da alça (na borda direita do círculo)
+                    const handleX = state.editingZone.x + state.editingZone.radius;
+                    const handleY = state.editingZone.y;
+                    
+                    // Verifica se clicou na Alça de Redimensionamento
+                    if (Math.hypot(mouseX - handleX, mouseY - handleY) < 15) {
+                        state.isResizing = true;
+                        state.resizeStartPoint = { x: mouseX, y: mouseY };
+                        if (state.menu) state.menu.style.display = 'none';
+                        return; // INTERROMPE O FLUXO AQUI (encontrou ação)
+                    }
+                    
+                    // Verifica se clicou dentro do Círculo para Arrastar
+                    if (Math.hypot(mouseX - state.editingZone.x, mouseY - state.editingZone.y) <= state.editingZone.radius) {
+                        state.isDraggingZone = true;
+                        state.zoneDragStartPoint = { x: mouseX, y: mouseY };
+                        state.originalSpellCenter = { x: state.editingZone.x, y: state.editingZone.y }; 
+                        if (state.menu) state.menu.style.display = 'none';
+                        return; // INTERROMPE AQUI
+                    }
+                } 
+                // LÓGICA PARA POLÍGONOS (Pincel/Formas)
+                else if (state.editingZone.path) {
+                    const bb = getBoundingBox(state.editingZone.path);
+                    const handles = [
+                        {x: bb.minX, y: bb.minY}, {x: bb.maxX, y: bb.minY},
+                        {x: bb.maxX, y: bb.maxY}, {x: bb.minX, y: bb.maxY}
+                    ];
+                    
+                    // Verifica se clicou em uma das 4 Alças (cantos)
+                    for (let i = 0; i < 4; i++) {
+                        if (Math.hypot(mouseX - handles[i].x, mouseY - handles[i].y) < 15) {
+                            state.isResizing = true;
+                            state.resizeStartPoint = {x: mouseX, y: mouseY};
+                            // Salva cópia do caminho original para cálculo de escala sem erro acumulado
+                            state.originalEditPath = JSON.parse(JSON.stringify(state.editingZone.path));
+                            if (state.menu) state.menu.style.display = 'none';
+                            return; // INTERROMPE AQUI
+                        }
+                    }
+                    
+                    // Verifica se clicou dentro do Polígono para Arrastar
+                    if (isPointInPolygon({x: mouseX, y: mouseY}, state.editingZone.path)) {
+                        state.isDraggingZone = true;
+                        state.zoneDragStartPoint = { x: mouseX, y: mouseY };
+                        // Salva cópia do caminho original para cálculo de arraste
+                        state.originalEditPath = JSON.parse(JSON.stringify(state.editingZone.path));
+                        if (state.menu) state.menu.style.display = 'none';
+                        return; // INTERROMPE AQUI
                     }
                 }
-            } else if (zone.path && zone.path.length > 0) {
-                // NOVO: Só deixa selecionar áreas desenhadas se NÃO estiver na ferramenta Magia
-                if (state.currentDrawMode !== 'spell_object') {
-                    ctx.beginPath();
-                    ctx.moveTo(zone.path[0].x, zone.path[0].y);
-                    zone.path.forEach(p => ctx.lineTo(p.x, p.y));
-                    if (ctx.isPointInPath(mouseX, mouseY)) {
-                        clickedZone = zone;
-                        break;
+                
+                // Se chegou aqui, clicou no vazio enquanto editava, então desseleciona
+                state.editingZone = null;
+            }
+
+            // --- 2. SELEÇÃO DE TOKEN (Personagem) ---
+            const clickedCharacter = tools.getCharacterAtPosition(mouseX, mouseY);
+            if (clickedCharacter) {
+                state.selectedCharacter = clickedCharacter;
+                tools.updateCharacterPanels();
+                state.isDraggingToken = true;
+                state.tokenDragStart = coords;
+                state.tokenHasMoved = false;
+                tools.closeCharacterMenu();
+                return; // INTERROMPE AQUI
+            }
+
+            // --- 3. SELEÇÃO DE UMA NOVA ZONA ---
+            for (let i = state.activeZones.length - 1; i >= 0; i--) {
+                const zone = state.activeZones[i];
+                let hit = false;
+                if (zone.type === 'spell_object') {
+                    hit = Math.hypot(mouseX - zone.x, mouseY - zone.y) <= zone.radius;
+                } else if (zone.path && zone.path.length > 0) {
+                    hit = isPointInPolygon({x: mouseX, y: mouseY}, zone.path);
+                }
+
+                if (hit) {
+                    // Define como a zona ativa para edição e arraste imediato
+                    state.editingZone = zone;
+                    state.isDraggingZone = true; // Permite selecionar e já sair arrastando
+                    state.zoneDragStartPoint = { x: mouseX, y: mouseY };
+
+                    if (zone.type === 'spell_object') {
+                        state.originalSpellCenter = { x: zone.x, y: zone.y };
+                    } else {
+                        state.originalEditPath = JSON.parse(JSON.stringify(zone.path));
                     }
+                    
+                    // Abre o menu radial (UDPATE: O menu abre no MOUSEUP para não quebrar o arraste)
+                    // state.potentialZoneSelection = zone; // Opcional: Para abrir menu no mouseup
+                    return; // INTERROMPE AQUI
                 }
             }
+
+            // --- 4. CLIQUE NO VAZIO NO MODO SELEÇÃO ---
+            tools.closeCharacterMenu();
+            state.selectedCharacter = null;
+            if (state.menu) state.menu.style.display = 'none';
+            return; // Fim do Modo Seleção
         }
 
-        if (clickedZone) {
-            state.mouseDownTarget = 'zone';
-            return;
-        }
-
-        state.mouseDownTarget = 'canvas';
+        // ==========================================
+        // MODO DESENHO (Criação, ignora o resto)
+        // ==========================================
+        // Limpeza cega de seleções
         tools.closeCharacterMenu();
         state.selectedCharacter = null;
-        tools.renderSideCharacterStatuses(null);
+        state.editingZone = null;
+        if (state.menu) state.menu.style.display = 'none';
 
         if (state.currentDrawMode === 'spell_object') {
+            // Salva o ponto para criar o objeto depois no mouseup
             state.pendingSpellPoint = { x: mouseX, y: mouseY };
-            return; // Menu abre no mouseup
-        }
-
-        if (state.currentDrawMode !== 'brush') {
+        } 
+        else if (state.currentDrawMode === 'brush') {
+            state.isDrawingCircle = true;
+            state.gesturePoints = [{ x: mouseX, y: mouseY }];
+        } 
+        else {
+            // Square, Triangle, Line, etc.
             state.isDrawingShape = true;
             state.shapeStart = { x: mouseX, y: mouseY };
             state.shapeEnd = { x: mouseX, y: mouseY };
-            return;
         }
-
-        state.isDrawingCircle = true;
-        state.gesturePoints = [{ x: mouseX, y: mouseY }];
-        state.intersectionPoint = null;
-        state.pendingMenuPoint = null;
     });
 
     window.addEventListener('mousemove', (e) => {
+        // --- 1. ARRASTE DE MENUS ---
         if (state.isDraggingCharacterMenu) {
             const padding = 12;
             const left = Math.min(Math.max(e.clientX - state.characterMenuDragOffset.x, padding), window.innerWidth - state.characterMenuShell.offsetWidth - padding);
@@ -154,6 +180,7 @@ export function initMouseEvents(canvas, ctx, state, tools) {
         const mouseX = coords.x;
         const mouseY = coords.y;
     
+        // --- 2. ARRASTE DE TOKEN ---
         if (state.isDraggingToken && state.selectedCharacter) {
             if (state.tokenDragStart && Math.hypot(mouseX - state.tokenDragStart.x, mouseY - state.tokenDragStart.y) > 4) { 
                 state.tokenHasMoved = true;
@@ -164,6 +191,7 @@ export function initMouseEvents(canvas, ctx, state, tools) {
             return;
         }
     
+        // --- 3. REDIMENSIONAMENTO DE ZONA (RESIZING) ---
         if (state.isResizing && state.editingZone) {
             if (state.editingZone.type === 'spell_object') {
                 const newRadius = Math.hypot(mouseX - state.editingZone.x, mouseY - state.editingZone.y);
@@ -172,10 +200,11 @@ export function initMouseEvents(canvas, ctx, state, tools) {
             else if (state.editingZone.path) {
                 const bb = getBoundingBox(state.originalEditPath);
                 const center = { x: bb.minX + bb.width / 2, y: bb.minY + bb.height / 2 };
+                
                 const oldDist = Math.hypot(state.resizeStartPoint.x - center.x, state.resizeStartPoint.y - center.y);
                 const newDist = Math.max(10, Math.hypot(mouseX - center.x, mouseY - center.y));
                 const scale = newDist / oldDist;
-    
+
                 state.editingZone.path = state.originalEditPath.map(p => ({
                     x: center.x + (p.x - center.x) * scale,
                     y: center.y + (p.y - center.y) * scale
@@ -183,69 +212,83 @@ export function initMouseEvents(canvas, ctx, state, tools) {
             }
             return;
         }
-    
+
+        // --- 4. ARRASTE DE ZONA ---
         if (state.isDraggingZone && state.editingZone) {
             const dx = mouseX - state.zoneDragStartPoint.x;  
             const dy = mouseY - state.zoneDragStartPoint.y;
+
             if (state.editingZone.type === 'spell_object') {
-              state.editingZone.x = state.originalSpellCenter.x + dx;
-              state.editingZone.y = state.originalSpellCenter.y + dy;
+                state.editingZone.x = state.originalSpellCenter.x + dx;
+                state.editingZone.y = state.originalSpellCenter.y + dy;
             } else if (state.editingZone.path) {
-                state.editingZone.path = state.originalEditPath.map(p => ({ x: p.x + dx, y: p.y + dy }));
+                state.editingZone.path = state.originalEditPath.map(p => ({ 
+                    x: p.x + dx, 
+                    y: p.y + dy 
+                }));
             }
             return;
         }
     
+        // --- 5. DESENHO DE FORMAS GEOMÉTRICAS ---
         if (state.isDrawingShape) {
             state.shapeEnd = { x: mouseX, y: mouseY };
             return;
         }
-    
-        if (!state.isDrawingCircle || state.menuOpen) return;
-        const point = { x: mouseX, y: mouseY };
-        
-        if (state.gesturePoints.length > 40) {
-            const segA = { p1: state.gesturePoints[state.gesturePoints.length - 1], p2: point };
-            const skipCount = Math.max(20, Math.floor(state.gesturePoints.length * 0.25));
-    
-            for (let i = 0; i < state.gesturePoints.length - skipCount; i++) {
-                const segB = { p1: state.gesturePoints[i], p2: state.gesturePoints[i + 1] };
-                const intersect = checkIntersection(segA, segB);
-                if (intersect) {
-                    state.lastCirclePath = state.gesturePoints.slice(i);
-                    state.intersectionPoint = intersect;
-                    state.pendingMenuPoint = intersect;
-                    return;
-                }
+
+        // --- 6. PINCEL (BRUSH) CORRIGIDO ---
+        if (state.isDrawingCircle) {
+            // PROTEÇÃO: Se soltar o clique, o desenho para IMEDIATAMENTE
+            if (e.buttons !== 1) {
+                state.isDrawingCircle = false;
+                state.gesturePoints = [];
+                return;
             }
+
+            const point = { x: mouseX, y: mouseY };
+            const lastPoint = state.gesturePoints[state.gesturePoints.length - 1];
+            
+            // Suavização da linha
+            if (!lastPoint || Math.hypot(point.x - lastPoint.x, point.y - lastPoint.y) > 3) {
+                state.gesturePoints.push(point);
+                state.lastCirclePath = state.gesturePoints;
+            }
+            return;
         }
-        state.gesturePoints.push(point);
     });
     
     window.addEventListener('mouseup', (e) => {
+        // --- 1. ARRASTE DE INTERFACE ---
         if (state.isDraggingEffectMenu || state.isDraggingCharacterMenu) {
             state.isDraggingEffectMenu = false;
             state.isDraggingCharacterMenu = false;
             return;
         }
-    
-        if ((e.target as HTMLElement).closest('.effect-menu-shell') || (e.target as HTMLElement).closest('#side-menu')) return;
-    
+
+        // Ignora se o clique terminou em cima de algum menu aberto
+        if ((e.target as HTMLElement).closest('.effect-menu-shell') || 
+            (e.target as HTMLElement).closest('#side-menu') || 
+            (e.target as HTMLElement).closest('#character-menu')) return;
+
+        const coords = tools.getMapCoords(e);
+
+        // --- 2. FINALIZA MODO SELEÇÃO (Arrastes e Edições) ---
         if (state.isResizing || state.isDraggingZone) {
             state.isResizing = false;
             state.isDraggingZone = false;
-            if (state.editingZone && state.editingZone.type === 'spell_object') {
-                state.currentMenuStack = [spellDatabase];
-            } else {
-                state.currentMenuStack = [menuDatabase];
+            
+            // Reabre o menu da zona que acabou de ser movida/redimensionada
+            if (state.editingZone) {
+                state.currentMenuStack = state.editingZone.type === 'spell_object' ? [spellDatabase] : [menuDatabase];
+                tools.renderEffectMenu();
+                tools.showMenu(e.clientX, e.clientY, true);
             }
-            tools.renderEffectMenu();
-            tools.showMenu(e.clientX, e.clientY, true);
             return;
         }
-    
+
         if (state.isDraggingToken) {
             state.isDraggingToken = false;
+            // Se foi só um clique rápido (não arrastou), abre a ficha do personagem
             if (!state.tokenHasMoved && state.selectedCharacter) {
                 tools.openCharacterMenu(state.selectedCharacter, e.clientX, e.clientY);
             }
@@ -253,83 +296,47 @@ export function initMouseEvents(canvas, ctx, state, tools) {
             state.tokenHasMoved = false;
             return;
         }
-    
-        const coords = tools.getMapCoords(e);
-        const mouseX = coords.x;
-        const mouseY = coords.y;
-    
-        if (state.mouseDownTarget === 'zone' && state.mouseDownPoint) {
-            const moved = Math.hypot(mouseX - state.mouseDownPoint.x, mouseY - state.mouseDownPoint.y);
-            if (moved < 5) {
-                for (let i = state.activeZones.length - 1; i >= 0; i--) {
-                    const zone = state.activeZones[i];
-                    let hit = false;
-                    
-                    if (zone.type === 'spell_object') {
-                        // NOVO: Proteção
-                        if (state.currentDrawMode === 'spell_object') {
-                            hit = Math.hypot(mouseX - zone.x, mouseY - zone.y) <= zone.radius;
-                        }
-                    } else if (zone.path && zone.path.length > 0) {
-                        // NOVO: Proteção
-                        if (state.currentDrawMode !== 'spell_object') {
-                            ctx.beginPath();
-                            ctx.moveTo(zone.path[0].x, zone.path[0].y);
-                            zone.path.forEach(p => ctx.lineTo(p.x, p.y));
-                            hit = ctx.isPointInPath(mouseX, mouseY);
-                        }
-                    }
-                    
-                    if (hit) {
-                        state.editingZone = zone;
-                        state.currentMenuStack = zone.type === 'spell_object' ? [spellDatabase] : [menuDatabase];
-                        tools.renderEffectMenu();
-                        tools.showMenu(e.clientX, e.clientY, true);
-                        break;
-                    }
-                }
-            }
-            state.mouseDownTarget = null;
-            state.mouseDownPoint = null;
-            return;
-        }
-    
-        if (state.mouseDownTarget === 'canvas' && state.currentDrawMode === 'spell_object') {
+
+        // --- 3. FINALIZA MODO DESENHO (Criação de novas áreas/magias) ---
+        
+        // A) Ferramenta Magia (Círculos Instantâneos)
+        if (state.currentDrawMode === 'spell_object' && state.pendingSpellPoint) {
             state.currentMenuStack = [spellDatabase];
             tools.renderEffectMenu();
             tools.showMenu(e.clientX, e.clientY, false);
-            state.mouseDownTarget = null;
-            state.mouseDownPoint = null;
+            // Não anulamos o pendingSpellPoint aqui pois o menu vai precisar dele para "spawnar" a magia
             return;
         }
-    
+
+        // B) Ferramenta Pincel (Brush Livre)
+        if (state.isDrawingCircle) {
+            state.isDrawingCircle = false; 
+
+            if (state.gesturePoints.length > 5) {
+                state.lastCirclePath = [...state.gesturePoints];
+                state.currentMenuStack = [menuDatabase];
+                tools.renderEffectMenu();
+                tools.showMenu(e.clientX, e.clientY, false);
+            }
+            state.gesturePoints = []; 
+            return;
+        }
+
+        // C) Formas Geométricas (Quadrado, Triângulo, etc)
         if (state.isDrawingShape) {
             state.isDrawingShape = false;
-            if (state.shapeStart && state.shapeEnd && Math.hypot(state.shapeEnd.x - state.shapeStart.x, state.shapeEnd.y - state.shapeStart.y) > 20) {
+            const dist = Math.hypot(state.shapeEnd.x - state.shapeStart.x, state.shapeEnd.y - state.shapeStart.y);
+            
+            if (dist > 15) {
                 state.lastCirclePath = generateShapePath(state.currentDrawMode, state.shapeStart, state.shapeEnd);
                 state.currentMenuStack = [menuDatabase];
                 tools.renderEffectMenu();
-                // Corrigido: usando e.clientX direto ao invés de horizPos
                 tools.showMenu(e.clientX, e.clientY, false);
             }
-            state.mouseDownTarget = null;
-            state.mouseDownPoint = null;
             return;
         }
-    
-        if (!state.menuOpen && state.isDrawingCircle) {
-            if (state.pendingMenuPoint) {
-                state.currentMenuStack = [menuDatabase];
-                tools.renderEffectMenu();
-                tools.showMenu(e.clientX, e.clientY, false);
-            } else {
-                state.isDrawingCircle = false;
-                state.gesturePoints = [];
-                state.intersectionPoint = null;
-                state.lastCirclePath = [];
-            }
-        }
-    
+
+        // Limpeza de segurança final
         state.mouseDownTarget = null;
         state.mouseDownPoint = null;
     });

@@ -324,8 +324,8 @@ function openCharacterMenu(character, x, y) {
     characterMenu.style.top = `${top}px`;
 }
 
-function closeCharacterMenu(e) {
-    if (e) e.stopPropagation();
+function closeCharacterMenu(e: any = null) {
+    if (e && e.stopPropagation) e.stopPropagation();
     characterMenu.style.display = 'none';
 }
 
@@ -400,18 +400,37 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-function setDrawMode(mode) {
-    state.currentDrawMode = mode;
+function setTool(toolName) {
+    state.currentDrawMode = toolName;
     
-    // Remove a classe active de todos os botões
+    // 1. Atualiza visualmente os botões
     document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
     
-    // Tenta encontrar o botão pelo ID. 
-    // Certifique-se que no HTML o ID do botão de magia seja 'tool-spell_object'
-    const activeBtn = document.getElementById(`tool-${mode}`);
+    // Suporta tanto IDs antigos (tool-brush) quanto novos (btn-tool-brush)
+    const activeBtn = document.getElementById(`btn-tool-${toolName}`) || document.getElementById(`tool-${toolName}`);
     if (activeBtn) {
         activeBtn.classList.add('active');
     }
+
+    // 2. Limpa TODOS os estados de interação para evitar bugs fantasmas
+    state.editingZone = null;
+    state.selectedCharacter = null;
+    state.isDrawingCircle = false;
+    state.isDrawingShape = false;
+    state.gesturePoints = [];
+    state.mouseDownTarget = null;
+    state.mouseDownPoint = null;
+    state.potentialZone = null;
+    state.isDraggingToken = false;
+    state.isDraggingZone = false;
+    state.isResizing = false;
+
+    // 3. Fecha menus que estavam abertos
+    closeCharacterMenu();
+    if (menu) menu.style.display = 'none';
+    
+    // 4. Limpa a barra lateral de status
+    updateCharacterPanels();
 }
 
 function renderInitiativeList() {
@@ -510,7 +529,7 @@ window.spawn = (id, x, y) => {
 window.toggleSideMenu = toggleSideMenu;
 window.setBackground = setBackground;
 window.toggleGrid = toggleGrid;
-window.setDrawMode = setDrawMode;
+window.setTool = setTool;
 
 window.menuGoBack = RadialMenu.menuGoBack;
 window.closeMenu = RadialMenu.closeMenu;

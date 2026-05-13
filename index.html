@@ -26,23 +26,27 @@
             <!-- FERRAMENTAS DE RITUAIS: aparecem no modo colapsado também -->
             <div class="ritual-tools-section">
                 <div class="ritual-tools-grid">
-                    <button class="tool-btn active" onclick="setDrawMode('brush')" id="tool-brush" title="Pincel Livre — desenhe uma área fechada no mapa">
+                    <button class="tool-btn active" id="btn-tool-select" onclick="setTool('select')">
+                        <span class="tool-icon">👆</span>
+                        <span class="tool-label">Seleção</span>
+                    </button>
+                    <button class="tool-btn active" onclick="setTool('brush')" id="tool-brush" title="Pincel Livre — desenhe uma área fechada no mapa">
                         <span class="tool-icon">🖌️</span>
                         <span class="tool-label full-only">Pincel</span>
                     </button>
-                    <button class="tool-btn" onclick="setDrawMode('square')" id="tool-square" title="Área Quadrada — clique e arraste para criar">
+                    <button class="tool-btn" onclick="setTool('square')" id="tool-square" title="Área Quadrada — clique e arraste para criar">
                         <span class="tool-icon">⬛</span>
                         <span class="tool-label full-only">Quadrado</span>
                     </button>
-                    <button class="tool-btn" onclick="setDrawMode('circle')" id="tool-circle" title="Área Circular — clique e arraste para criar">
+                    <button class="tool-btn" onclick="setTool('circle')" id="tool-circle" title="Área Circular — clique e arraste para criar">
                         <span class="tool-icon">⭕</span>
                         <span class="tool-label full-only">Círculo</span>
                     </button>
-                    <button class="tool-btn" onclick="setDrawMode('triangle')" id="tool-triangle" title="Área Triangular — clique e arraste para criar">
+                    <button class="tool-btn" onclick="setTool('triangle')" id="tool-triangle" title="Área Triangular — clique e arraste para criar">
                         <span class="tool-icon">🔺</span>
                         <span class="tool-label full-only">Triângulo</span>
                     </button>
-                    <button class="tool-btn" onclick="setDrawMode('spell_object')" id="tool-spell_object" title="Magia Individual — clique no mapa para posicionar">
+                    <button class="tool-btn" onclick="setTool('spell_object')" id="tool-spell_object" title="Magia Individual — clique no mapa para posicionar">
                         <span class="tool-icon">✨</span>
                         <span class="tool-label full-only">Magia</span>
                     </button>
