@@ -50,6 +50,10 @@
                         <span class="tool-icon">✨</span>
                         <span class="tool-label full-only">Magia</span>
                     </button>
+                    <button class="tool-btn" id="btn-tool-text" onclick="setTool('text')">
+                        <span class="tool-icon">🔤</span>
+                        <span class="tool-label">Texto</span>
+                    </button>
                     <button class="tool-btn danger-tool" onclick="clearArea()" title="Limpar Tudo — remove todos os efeitos e zonas">
                         <span class="tool-icon">🗑️</span>
                         <span class="tool-label full-only">Limpar</span>
@@ -210,36 +214,115 @@
                     <div class="character-menu-token" id="character-menu-token"></div>
                 </div>
                 <div class="character-menu-body">
-                    <div class="character-menu-meta">
-                        <div class="character-menu-stat">
-                            <span class="character-menu-stat-label">Classe</span>
-                            <span class="character-menu-class" id="character-menu-class">-</span>
+                    <div id="char-view-mode" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="character-menu-meta">
+                            <div class="character-meta-header">
+                                <div class="header-info">
+                                    <span id="character-menu-class">Classe</span>
+                                </div>
+                                <button id="btn-edit-character" onclick="openEditCharacterModal()" title="Editar Personagem">⚙️</button>
+                            </div>
+                            
+                            <div class="character-menu-stat">
+                                <span class="character-menu-stat-label">HP</span>
+                                <span class="character-menu-stat-value" id="character-menu-hp">0 / 0</span>
+                            </div>
+                            
+                            <div class="combat-stats-grid" id="character-combat-stats"></div>
+                            <div class="attributes-grid" id="character-attributes"></div>
+                            
+                            <div class="character-menu-details">
+                                <div id="character-resources" class="resource-list"></div>
+                                <div id="character-skills" class="skills-list"></div>
+                            </div>
                         </div>
-                        <div class="character-menu-stat">
-                            <span class="character-menu-stat-label">HP</span>
-                            <span class="character-menu-stat-value" id="character-menu-hp">0 / 0</span>
+
+                        <div class="character-menu-actions">
+                            <input id="character-hp-input" class="character-menu-input" type="number" min="0" step="1" value="5">
+                            <button class="character-menu-btn danger" onclick="applyCharacterHp(-1)">-</button>
+                            <button class="character-menu-btn" onclick="applyCharacterHp(1)">+</button>
                         </div>
-                        
-                        <div class="combat-stats-grid" id="character-combat-stats"></div>
-                        <div class="attributes-grid" id="character-attributes"></div>
-                        
+
                         <div class="character-menu-details">
                             <div id="character-resources" class="resource-list"></div>
                             <div id="character-skills" class="skills-list"></div>
                         </div>
+
+                        <div class="character-menu-details" id="character-traits-container" style="display: none;">
+                            <div class="character-menu-subtitle">Habilidades (Traits)</div>
+                            <div id="character-traits" class="feature-list"></div>
+                        </div>
+                        
+                        <div class="character-menu-details" id="character-actions-container" style="display: none;">
+                            <div class="character-menu-subtitle">Ações de Combate</div>
+                            <div id="character-actions" class="feature-list"></div>
+                        </div>
+
+                        <div class="character-menu-status-block">
+                            <div class="character-menu-subtitle">Status</div>
+                            <div class="character-status-grid" id="character-status-grid"></div>
+                        </div>
+
+                        <button class="character-menu-btn danger-outline" onclick="removeMonsterFromMap()" title="Remover Criatura do Mapa">
+                            🗑️ Remover do Mapa
+                        </button>
                     </div>
-                    <div class="character-menu-actions">
-                        <input id="character-hp-input" class="character-menu-input" type="number" min="0" step="1" value="5">
-                        <button class="character-menu-btn danger" onclick="applyCharacterHp(-1)">-</button>
-                        <button class="character-menu-btn" onclick="applyCharacterHp(1)">+</button>
+
+                    <div id="char-edit-mode" style="display: none; flex-direction: column; gap: 12px;">
+                        <div class="character-menu-subtitle" style="margin-bottom: 8px; border-bottom: 1px solid var(--color-ornament-dark); padding-bottom: 4px;">Editar Ficha Avançada</div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Nome do Personagem / Monstro</label>
+                            <input type="text" id="edit-char-name" class="character-menu-input full-width">
+                        </div>
+                        
+                        <div class="form-row form-row-3">
+                            <div class="form-group">
+                                <label class="form-label" title="Vida Atual">HP Atual</label>
+                                <input type="number" id="edit-char-hp" class="character-menu-input full-width">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" title="Vida Máxima">HP Máx</label>
+                                <input type="number" id="edit-char-maxhp" class="character-menu-input full-width">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" title="Vida Temporária">HP Temp</label>
+                                <input type="number" id="edit-char-temphp" class="character-menu-input full-width">
+                            </div>
+                        </div>
+
+                        <div class="form-row form-row-3">
+                            <div class="form-group">
+                                <label class="form-label" title="Classe de Armadura">CA</label>
+                                <input type="number" id="edit-char-ac" class="character-menu-input full-width">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" title="Deslocamento">Desl.</label>
+                                <input type="number" id="edit-char-speed" class="character-menu-input full-width">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" title="Valor na Ordem de Turnos">Iniciativa</label>
+                                <input type="number" id="edit-char-init" class="character-menu-input full-width">
+                            </div>
+                        </div>
+
+                        <div class="form-row form-row-img-size">
+                            <div class="form-group">
+                                <label class="form-label">URL da Imagem</label>
+                                <input type="text" id="edit-char-img" class="character-menu-input full-width" placeholder="https://...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" title="Tamanho do círculo no mapa">Raio</label>
+                                <input type="number" id="edit-char-radius" class="character-menu-input full-width" step="5">
+                            </div>
+                        </div>
+
+                        <div class="edit-form-actions">
+                            <button class="character-menu-btn" onclick="closeEditCharacterModal()">Cancelar</button>
+                            <button class="character-menu-btn primary-action" onclick="saveCharacterEdit()">Salvar Alterações</button>
+                        </div>
                     </div>
-                    <div class="character-menu-status-block">
-                        <div class="character-menu-subtitle">Status</div>
-                        <div class="character-status-grid" id="character-status-grid"></div>
-                    </div>
-                    <button class="character-menu-btn danger-outline" onclick="removeMonsterFromMap()" title="Remover Criatura do Mapa">
-                        🗑️ Remover do Mapa
-                    </button>
+
                 </div>
             </div>
         </div>

@@ -213,74 +213,146 @@ function updateCharacterMenu(character) {
     if (character.tempHp > 0) hpString += ` (+${character.tempHp} Temp)`;
     characterMenuHp.textContent = hpString;
     
-    characterMenuToken.style.background = character.color;
+    // Avatar/Cor
+    if (character.visuals && character.visuals.token_img) {
+        characterMenuToken.style.backgroundImage = `url('${character.visuals.token_img}')`;
+        characterMenuToken.style.backgroundSize = 'cover';
+        characterMenuToken.style.backgroundPosition = 'center';
+    } else {
+        characterMenuToken.style.backgroundImage = 'none';
+        characterMenuToken.style.background = character.color;
+    }
     
     // Atualiza botões de status
-    renderCharacterStatusButtons(character);
+    if (typeof renderCharacterStatusButtons === 'function') {
+        renderCharacterStatusButtons(character);
+    }
 
     // 1. Estatísticas de Combate
     const combatStatsDiv = document.getElementById('character-combat-stats');
-    combatStatsDiv.innerHTML = `
-        <div class="combat-stat-box"><span class="attr-label">CA</span><span class="attr-val">${character.ac || 10}</span></div>
-        <div class="combat-stat-box"><span class="attr-label">Desloc.</span><span class="attr-val">${character.speed || 9}m</span></div>
-        <div class="combat-stat-box"><span class="attr-label">Percep. Pass.</span><span class="attr-val">${character.passivePerception || 10}</span></div>
-    `;
+    if (combatStatsDiv) {
+        combatStatsDiv.innerHTML = `
+            <div class="combat-stat-box"><span class="attr-label">CA</span><span class="attr-val">${character.ac || 10}</span></div>
+            <div class="combat-stat-box"><span class="attr-label">Desloc.</span><span class="attr-val">${character.speed || 9}</span></div>
+            <div class="combat-stat-box"><span class="attr-label">Percep. Pass.</span><span class="attr-val">${character.passivePerception || 10}</span></div>
+        `;
+    }
 
     // 2. Atributos
     const attrGrid = document.getElementById('character-attributes');
-    const attrMap = { str: 'FOR', dex: 'DES', con: 'CON', int: 'INT', wis: 'SAB', cha: 'CAR' };
-    let attrHtml = '';
-    
-    for (const [key, label] of Object.entries(attrMap)) {
-        const val = character.attributes ? character.attributes[key] || 0 : 0;
-        const displayVal = val >= 0 ? `+${val}` : val;
-        attrHtml += `<div class="attribute-box"><span class="attr-label">${label}</span><span class="attr-val">${displayVal}</span></div>`;
+    if (attrGrid) {
+        const attrMap = { str: 'FOR', dex: 'DES', con: 'CON', int: 'INT', wis: 'SAB', cha: 'CAR' };
+        let attrHtml = '';
+        
+        for (const [key, label] of Object.entries(attrMap)) {
+            const val = character.attributes ? character.attributes[key] || 0 : 0;
+            const displayVal = val >= 0 ? `+${val}` : val;
+            attrHtml += `<div class="attribute-box"><span class="attr-label">${label}</span><span class="attr-val">${displayVal}</span></div>`;
+        }
+        attrGrid.innerHTML = attrHtml;
     }
-    attrGrid.innerHTML = attrHtml;
 
     // 3. Recursos e Slots de Magia
     const resourcesDiv = document.getElementById('character-resources');
-    let resHtml = '';
-    
-    // Formata nomes camelCase para texto legível (ex: actionSurge -> Action Surge)
-    const formatKey = (str) => str.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+    if (resourcesDiv) {
+        let resHtml = '';
+        
+        // Formata nomes camelCase para texto legível (ex: actionSurge -> Action Surge)
+        const formatKey = (str) => str.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
 
-    if (character.resources) {
-        for (const [key, val] of Object.entries(character.resources)) {
-            const valStr = typeof val === 'object' ? `${val.current} / ${val.max}` : val;
-            resHtml += `<div class="resource-item"><b>${formatKey(key)}:</b> ${valStr}</div>`;
+        if (character.resources) {
+            for (const [key, val] of Object.entries(character.resources)) {
+                const valStr = typeof val === 'object' ? `${val.current} / ${val.max}` : val;
+                resHtml += `<div class="resource-item"><b>${formatKey(key)}:</b> ${valStr}</div>`;
+            }
         }
-    }
-    if (character.spellSlots) {
-        for (const [key, val] of Object.entries(character.spellSlots)) {
-            const levelStr = key.replace('level', 'Magia Nv ');
-            resHtml += `<div class="resource-item"><b>${levelStr}:</b> ${val.current} / ${val.max}</div>`;
+        if (character.spellSlots) {
+            for (const [key, val] of Object.entries(character.spellSlots)) {
+                const levelStr = key.replace('level', 'Magia Nv ');
+                resHtml += `<div class="resource-item"><b>${levelStr}:</b> ${val.current} / ${val.max}</div>`;
+            }
         }
+        if (resHtml === '') {
+             resHtml = `<div class="resource-item">Nenhum recurso especial.</div>`;
+        }
+        resourcesDiv.innerHTML = `<div class="character-menu-subtitle">Recursos & Magias</div>${resHtml}`;
     }
-    if (resHtml === '') {
-         resHtml = `<div class="resource-item">Nenhum recurso especial.</div>`;
-    }
-    resourcesDiv.innerHTML = `<div class="character-menu-subtitle">Recursos & Magias</div>${resHtml}`;
 
     // 4. Perícias
     const skillsDiv = document.getElementById('character-skills');
-    const skillMap = {
-        acrobatics: 'Acrobacia', animalHandling: 'Trato c/ Animais', arcana: 'Arcanismo', athletics: 'Atletismo',
-        deception: 'Enganação', history: 'História', insight: 'Intuição', intimidation: 'Intimidação',
-        investigation: 'Investigação', medicine: 'Medicina', nature: 'Natureza', perception: 'Percepção',
-        performance: 'Atuação', persuasion: 'Persuasão', religion: 'Religião', sleightOfHand: 'Prestidigitação',
-        stealth: 'Furtividade', survival: 'Sobrevivência'
-    };
+    if (skillsDiv) {
+        const skillMap = {
+            acrobatics: 'Acrobacia', animalHandling: 'Trato c/ Animais', arcana: 'Arcanismo', athletics: 'Atletismo',
+            deception: 'Enganação', history: 'História', insight: 'Intuição', intimidation: 'Intimidação',
+            investigation: 'Investigação', medicine: 'Medicina', nature: 'Natureza', perception: 'Percepção',
+            performance: 'Atuação', persuasion: 'Persuasão', religion: 'Religião', sleightOfHand: 'Prestidigitação',
+            stealth: 'Furtividade', survival: 'Sobrevivência'
+        };
+        
+        let skillHtml = '<div class="character-menu-subtitle">Perícias</div><div class="skills-grid">';
+        if (character.skills) {
+            for (const [key, val] of Object.entries(character.skills)) {
+                const displayVal = val >= 0 ? `+${val}` : val;
+                skillHtml += `<div class="skill-item"><span>${skillMap[key] || key}</span><span>${displayVal}</span></div>`;
+            }
+        }
+        skillHtml += '</div>';
+        skillsDiv.innerHTML = skillHtml;
+    }
+
+    // ==========================================
+    // 5. RENDERIZAÇÃO DE TRAITS (HABILIDADES)
+    // ==========================================
+    const traitsContainer = document.getElementById('character-traits-container');
+    const traitsList = document.getElementById('character-traits');
     
-    let skillHtml = '<div class="character-menu-subtitle">Perícias</div><div class="skills-grid">';
-    if (character.skills) {
-        for (const [key, val] of Object.entries(character.skills)) {
-            const displayVal = val >= 0 ? `+${val}` : val;
-            skillHtml += `<div class="skill-item"><span>${skillMap[key] || key}</span><span>${displayVal}</span></div>`;
+    if (traitsContainer && traitsList) {
+        if (character.traits && character.traits.length > 0) {
+            traitsContainer.style.display = 'flex';
+            traitsList.innerHTML = character.traits.map(t => `
+                <div class="feature-item">
+                    <span class="feature-name">${t.name}.</span>
+                    <span class="feature-desc">${t.desc || ''}</span>
+                </div>
+            `).join('');
+        } else {
+            traitsContainer.style.display = 'none';
         }
     }
-    skillHtml += '</div>';
-    skillsDiv.innerHTML = skillHtml;
+
+    // ==========================================
+    // 6. RENDERIZAÇÃO DE ACTIONS (AÇÕES E ATAQUES)
+    // ==========================================
+    const actionsContainer = document.getElementById('character-actions-container');
+    const actionsList = document.getElementById('character-actions');
+    
+    if (actionsContainer && actionsList) {
+        if (character.actions && character.actions.length > 0) {
+            actionsContainer.style.display = 'flex';
+            actionsList.innerHTML = character.actions.map(a => {
+                let details = a.desc ? a.desc : '';
+                
+                // Formatação para ataques com armas/magias
+                if (a.damage) {
+                    const modifier = a.mod ? `<strong>Acerto:</strong> ${a.mod}` : '';
+                    const range = a.range ? ` | <strong>Alcance:</strong> ${a.range}` : '';
+                    const dmgType = a.type ? `(${a.type})` : '';
+                    
+                    const prefix = modifier ? `${modifier} | ` : '';
+                    details += `${prefix}<strong>Dano:</strong> ${a.damage} ${dmgType} ${range}`;
+                }
+                
+                return `
+                <div class="feature-item">
+                    <span class="feature-name">${a.name}.</span>
+                    <span class="feature-desc">${details}</span>
+                </div>
+                `;
+            }).join('');
+        } else {
+            actionsContainer.style.display = 'none';
+        }
+    }
 }
 
 function updateCharacterPanels() {
@@ -327,6 +399,15 @@ function openCharacterMenu(character, x, y) {
 function closeCharacterMenu(e: any = null) {
     if (e && e.stopPropagation) e.stopPropagation();
     characterMenu.style.display = 'none';
+
+    // FORÇA O RESET PARA O MODO LEITURA (Descarta as edições não salvas)
+    const editMode = document.getElementById('char-edit-mode');
+    const viewMode = document.getElementById('char-view-mode');
+    
+    if (editMode && viewMode) {
+        editMode.style.display = 'none';
+        viewMode.style.display = 'flex';
+    }
 }
 
 function startCharacterMenuDrag(e) {
@@ -523,7 +604,7 @@ renderInitiativeList();
 animate();
 
 window.spawn = (id, x, y) => {
-    CombatLogic.spawnMonster(id, x, y);
+    CombatLogic.spawnMonster(id, x, y, renderInitiativeList);
 };
 // Expondo funções para o escopo global (necessário no Vite/Módulos)
 window.toggleSideMenu = toggleSideMenu;
@@ -570,5 +651,82 @@ window.resetCombat = () => {
     });
 };
 
-
 window.removeMonsterFromMap = removeMonsterFromMap;
+
+window.openEditCharacterModal = () => {
+    const char = state.selectedCharacter;
+    if (!char) return;
+
+    // 1. Preenche todos os inputs com os dados da instância
+    (document.getElementById('edit-char-name') as HTMLInputElement).value = char.name || '';
+    (document.getElementById('edit-char-hp') as HTMLInputElement).value = char.hp || 0;
+    (document.getElementById('edit-char-maxhp') as HTMLInputElement).value = char.maxHp || 0;
+    (document.getElementById('edit-char-temphp') as HTMLInputElement).value = char.tempHp || 0;
+    
+    (document.getElementById('edit-char-ac') as HTMLInputElement).value = char.ac || 0;
+    (document.getElementById('edit-char-speed') as HTMLInputElement).value = char.speed || 0;
+    (document.getElementById('edit-char-init') as HTMLInputElement).value = char.initiative || 0;
+    (document.getElementById('edit-char-radius') as HTMLInputElement).value = char.radius || 30;
+    
+    const currentImg = char.visuals?.token_img || char.avatar || '';
+    (document.getElementById('edit-char-img') as HTMLInputElement).value = currentImg;
+
+    // 2. Transição de modo Leitura -> Edição
+    document.getElementById('char-view-mode').style.display = 'none';
+    document.getElementById('char-edit-mode').style.display = 'flex';
+};
+
+window.closeEditCharacterModal = () => {
+    // Esconde a edição e volta para a leitura
+    document.getElementById('char-edit-mode').style.display = 'none';
+    document.getElementById('char-view-mode').style.display = 'flex';
+};
+
+window.saveCharacterEdit = () => {
+    const char = state.selectedCharacter;
+    if (!char) return;
+
+    // 1. Coleta os novos dados digitados
+    const newName = (document.getElementById('edit-char-name') as HTMLInputElement).value.trim();
+    const newHp = parseInt((document.getElementById('edit-char-hp') as HTMLInputElement).value) || 0;
+    const newMaxHp = parseInt((document.getElementById('edit-char-maxhp') as HTMLInputElement).value) || 1;
+    const newTempHp = parseInt((document.getElementById('edit-char-temphp') as HTMLInputElement).value) || 0;
+    
+    const newAc = parseInt((document.getElementById('edit-char-ac') as HTMLInputElement).value) || 10;
+    const newSpeed = parseInt((document.getElementById('edit-char-speed') as HTMLInputElement).value) || 0;
+    const newInit = parseInt((document.getElementById('edit-char-init') as HTMLInputElement).value) || 0;
+    const newRadius = parseInt((document.getElementById('edit-char-radius') as HTMLInputElement).value) || 30;
+    const newImg = (document.getElementById('edit-char-img') as HTMLInputElement).value.trim();
+
+    // 2. Injeta na Instância
+    char.name = newName;
+    char.maxHp = newMaxHp;
+    char.hp = Math.min(Math.max(0, newHp), newMaxHp); // Trava o HP entre 0 e o Máximo
+    char.tempHp = newTempHp;
+    
+    char.ac = newAc;
+    char.speed = newSpeed;
+    char.initiative = newInit;
+    char.radius = Math.max(10, newRadius); // Protege para o token não sumir (raio mínimo 10)
+
+    if (!char.visuals) char.visuals = {};
+    char.visuals.token_img = newImg;
+
+    // 3. Volta a interface para o modo de visualização
+    window.closeEditCharacterModal();
+    
+    // 4. Manda o VTT atualizar as informações visuais
+    if (typeof updateCharacterPanels === 'function') updateCharacterPanels();
+    
+    // Atualiza a Iniciativa e re-ordena se o mestre tiver editado ela
+    if (typeof renderInitiativeList === 'function') {
+        if (typeof sortInitiative === 'function') sortInitiative(); // Opcional: já auto-organiza
+        renderInitiativeList();
+    }
+    
+    // Atualiza a imagem do painel lateral
+    const tokenImgDiv = document.getElementById('character-menu-token');
+    if (tokenImgDiv && char.visuals.token_img) {
+        tokenImgDiv.style.backgroundImage = `url('${char.visuals.token_img}')`;
+    }
+};

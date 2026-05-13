@@ -197,7 +197,14 @@ export function renderEffectMenu() {
                 } else {
                     setEffect(item, e);
                 }
+                
                 closeMenu(null); 
+                
+                // === A MÁGICA ACONTECE AQUI ===
+                // Após escolher o efeito e fechar o menu, volta para a ferramenta de seleção
+                if (typeof (window as any).setTool === 'function') {
+                    (window as any).setTool('select');
+                }
             };
         }
         grid.appendChild(btn);

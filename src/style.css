@@ -1138,3 +1138,176 @@ canvas {
     color: #fff;
     box-shadow: 0 0 10px rgba(138, 40, 24, 0.4);
 }
+
+/* ── MODO EDIÇÃO INLINE ── */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.form-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: var(--color-section-label);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.character-menu-input.full-width {
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 10px;
+}
+
+.character-menu-input.full-width:focus {
+    border-color: var(--color-ornament-light);
+    box-shadow: 0 0 5px rgba(240, 176, 48, 0.3);
+}
+
+.edit-form-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-ornament-dark);
+}
+
+.edit-form-actions .character-menu-btn {
+    flex: 1;
+}
+
+.character-menu-btn.primary-action {
+    border-color: var(--color-ornament-mid);
+    color: var(--color-ornament-light);
+    background: linear-gradient(180deg, rgba(74, 42, 8, 0.8) 0%, rgba(30, 15, 4, 0.8) 100%);
+}
+
+.character-menu-btn.primary-action:hover {
+    box-shadow: 0 0 10px var(--color-crest-glow);
+    border-color: var(--color-ornament-light);
+    color: #fff;
+}
+
+/* Ajuste no Header para alinhar com o botão de editar */
+#character-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--color-ornament-dark);
+    padding-bottom: 6px;
+}
+
+#btn-edit-character {
+    background: none;
+    border: none;
+    color: var(--color-subtitle);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    margin: 0;
+    border: 1px solid red;
+    transition: transform 0.2s, color 0.2s;
+}
+
+#btn-edit-character:hover {
+    color: var(--color-ornament-light);
+    transform: rotate(45deg);
+}
+
+/* Grades complementares para a edição da Ficha */
+.form-row-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.form-row-img-size {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 10px;
+}
+
+/* ── Habilidades e Ações do Monstro ── */
+.feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.feature-item {
+    font-size: 13px;
+    color: var(--color-character-text);
+    background: rgba(255, 255, 255, 0.03);
+    padding: 6px 8px;
+    border-left: 2px solid var(--color-danger-label); /* Uma barra avermelhada na esquerda */
+    border-radius: 0 3px 3px 0;
+    line-height: 1.4;
+}
+
+.feature-name {
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
+    color: var(--color-ornament-light);
+    margin-right: 4px;
+    letter-spacing: 0.05em;
+}
+
+.feature-desc {
+    color: #cccccc; /* Um tom um pouco mais suave que o nome */
+}
+
+/* ── CABEÇALHO INTERNO DA FICHA (Nome, Classe e Botão Editar) ── */
+.character-meta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--color-ornament-dark);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+.header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px; /* Espaço entre o Nome e a Classe */
+}
+
+#character-menu-name {
+    margin: 0; /* ISSO AQUI CONSERTA O BUG DO ESPAÇAMENTO GIGANTE */
+    color: var(--color-title);
+    font-family: 'Cinzel', serif;
+    font-size: var(--text-lg);
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+}
+
+#character-menu-class {
+    font-size: var(--text-sm);
+    color: var(--color-subtitle);
+    font-style: italic;
+}
+
+#btn-edit-character {
+    background: none;
+    border: none;
+    color: var(--color-subtitle);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    margin-top: 2px; /* Ajuste fino para alinhar a engrenagem com o Nome */
+    transition: transform 0.2s, color 0.2s;
+}
+
+#btn-edit-character:hover {
+    color: var(--color-ornament-light);
+    transform: rotate(45deg);
+}

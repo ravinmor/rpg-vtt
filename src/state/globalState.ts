@@ -39,6 +39,8 @@ export const state = {
     mouseDownPoint: null as any,
     currentMenuStack: [menuDatabase],
     potentialZone: null as any,
+    isRotating: false,
+    originalFontSize: 24,
     // Capturamos os elementos DOM que o mouse precisa
     sideMenu: document.getElementById('side-menu'),
     characterMenu: document.getElementById('character-menu'),

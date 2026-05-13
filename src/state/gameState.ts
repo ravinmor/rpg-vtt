@@ -91,29 +91,49 @@ export function removeStatus(characters, characterId, statusKey, callback) {
     if (callback) callback();
 }
 
-export function spawnMonster(monsterId: string, x: number, y: number) {
-    const template = bestiaryDatabase.find(m => m.id === monsterId);
+// Adicionei o parâmetro 'onSpawnCallback'
+export function spawnMonster(templateId, x, y, onSpawnCallback) {
+    // 1. Usa o nome correto do import: bestiaryDatabase
+    const template = bestiaryDatabase.find(m => m.id === templateId);
+
     if (!template) {
-        console.error(`Monstro ${monsterId} não encontrado no bestiário.`);
-        return;
+        console.warn(`Monstro com ID "${templateId}" não encontrado no bestiário.`);
+        return null;
     }
 
-    // Criamos a instância única para o mapa
-    const newMonsterInstance = {
-        ...JSON.parse(JSON.stringify(template)), // Clone para não editar o banco de dados
-        id: `${template.id}_${Date.now()}`,      // ID único
+    const newInstance = JSON.parse(JSON.stringify(template));
+
+    const monsterToSpawn = {
+        ...newInstance,
+        
+        id: `${template.id}_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+        isNPC: true,
         x: x,
         y: y,
-        radius: 30 * (template.visuals.scale || 1),
-        statuses: [],
-        hp: template.combat.hp.max, // Inicializa HP
-        maxHp: template.combat.hp.max,
         initiative: 0,
-        isMonster: true // Flag importante para a UI
+        isTurn: false,
+        statuses: [],
+
+        hp: template.combat.hp.max,
+        maxHp: template.combat.hp.max,
+        tempHp: 0,
+        ac: template.combat.ca,
+        speed: parseInt(template.combat.speed),
+        
+        radius: 30 * (template.visuals?.scale || 1),
+        color: '#e74c3c' 
     };
 
-    characters.push(newMonsterInstance);
-    return newMonsterInstance;
+    characters.push(monsterToSpawn);
+
+    console.log(`Spawnado: ${monsterToSpawn.name} (ID: ${monsterToSpawn.id})`);
+
+    // 2. Chama o callback passado pelo arquivo principal (main.ts)
+    if (onSpawnCallback) {
+        onSpawnCallback();
+    }
+
+    return monsterToSpawn;
 }
 
 export function deleteCharacter(characterId: string) {

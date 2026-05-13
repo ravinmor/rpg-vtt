@@ -11,13 +11,82 @@ export function drawActiveZones(ctx, canvas, activeZones, editingZone) {
     activeZones.forEach((zone) => {
         ctx.save();
 
-        // --- LÓGICA PARA MAGIAS CIRCULARES (spell_object) ---
         if (zone.type === 'spell_object') {
             renderSpellObject(ctx, zone, editingZone);
         } 
-        // --- LÓGICA PARA ÁREAS DESENHADAS (Pincel/Formas) ---
         else if (zone.path && zone.path.length > 0) {
             renderDrawnArea(ctx, canvas, zone, editingZone);
+        }else if (zone.type === 'text') {
+            const fontFamily = zone.fontFamily || 'Arial';
+            ctx.font = `bold ${zone.fontSize}px ${fontFamily}`;
+            
+            const width = ctx.measureText(zone.text).width;
+            const height = zone.fontSize; // Altura aproximada baseada na fonte
+            
+            // Move o canvas para o centro do texto e aplica a rotação
+            ctx.translate(zone.x, zone.y);
+            ctx.rotate(zone.rotation || 0);
+
+            // Alinhamento centralizado
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+            
+            // Desenha a BORDA PRETA fina (Stroke)
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.lineJoin = 'round';
+            ctx.strokeText(zone.text, 0, 0);
+
+            // Desenha o PREENCHIMENTO com a cor do título
+            ctx.fillStyle = zone.color || '#f0b030';
+            ctx.fillText(zone.text, 0, 0);
+
+            // Borda de seleção e Handles se estiver editando
+            if (editingZone === zone) {
+                const hw = width / 2;
+                const hh = height / 2;
+
+                // Caixa ao redor
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.strokeRect(-hw - 8, -hh - 8, width + 16, height + 16);
+                ctx.setLineDash([]);
+
+                // Alça de Zoom (Quadrado no canto inferior direito)
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                ctx.fillRect(hw, hh, 12, 12);
+                ctx.strokeRect(hw, hh, 12, 12);
+
+                // Alça de Rotação (Uma "antena" com um círculo no topo)
+                ctx.beginPath();
+                ctx.moveTo(0, -hh - 8);
+                ctx.lineTo(0, -hh - 30);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.arc(0, -hh - 30, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Alça de Deletar (Círculo vermelho com "X" no canto superior direito)
+                ctx.beginPath();
+                ctx.arc(hw + 10, -hh - 10, 10, 0, Math.PI * 2);
+                ctx.fillStyle = '#ff4444'; // Vermelho
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff'; // Borda branca
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Desenha o "X"
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 12px Arial';
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center';
+                ctx.fillText('X', hw + 10, -hh - 10);
+            }
         }
 
         ctx.restore();
@@ -180,8 +249,8 @@ function renderDrawnArea(ctx, canvas, zone, editingZone) {
     ctx.restore();
 
     // 6. Borda da área (agora com opacidade maior para você enxergar e sem ser cortada)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1;
     ctx.stroke();
 
     // 7. Renderiza as Linhas e Handles de Edição se estiver selecionada
