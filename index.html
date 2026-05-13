@@ -106,16 +106,16 @@
                     </div>
                 <div class="panel-divider full-only"></div>
 
-                <div class="panel-section-label full-only">🛡️ Jogadores</div>
                 <div class="panel-select-group full-only">
-                    <input type="file" id="player-import-input" style="display: none;" accept=".json">
-                    
-                    <button class="view-btn accent" style="width: 100%;" onclick="document.getElementById('player-import-input').click()">
-                        📥 Importar Ficha (.json)
-                    </button>
-                    <p class="panel-subtitle" style="font-size: 10px; margin-top: 5px;">
-                        Selecione o arquivo JSON do personagem.
-                    </p>
+                    <div class="panel-section-label full-only">🛡️ Jogadores</div>
+                    <div class="panel-select-group full-only">
+                        <button class="view-btn accent" style="width: 100%;" onclick="openImportModal()">
+                            📥 Importar Personagens
+                        </button>
+                        <p class="panel-subtitle" style="font-size: 10px; margin-top: 5px; text-align: center;">
+                            Upload de arquivo .json ou colar código.
+                        </p>
+                    </div>
                 </div>
 
                 <!-- SEÇÃO: VISUALIZAÇÃO -->
@@ -328,6 +328,29 @@
         </div>
     </div>
 
+    <div id="import-character-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 style="font-family: 'Cinzel', serif; color: var(--color-title); margin-top: 0;">Importar Personagens</h2>
+            <p style="font-size: var(--text-sm); color: var(--color-subtitle); margin-bottom: 15px;">
+                Faça o upload de um arquivo <b>.json</b> ou cole o código na caixa abaixo. Você pode importar um personagem ou uma lista inteira [array].
+            </p>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label">Arquivo JSON</label>
+                <input type="file" id="import-file-input" accept=".json" class="character-menu-input full-width" style="padding: 6px; cursor: pointer;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label">Ou Cole o Código JSON</label>
+                <textarea id="import-json-textarea" class="character-menu-input full-width" rows="8" placeholder='[ { "name": "Guerreiro", "hp": 50 ... } ]' style="resize: vertical; font-family: monospace;"></textarea>
+            </div>
+
+            <div class="edit-form-actions">
+                <button class="character-menu-btn" onclick="closeImportModal()">Cancelar</button>
+                <button class="character-menu-btn primary-action" onclick="processImportedJson()">📥 Importar para o Mapa</button>
+            </div>
+        </div>
+    </div>
     <canvas id="vttCanvas"></canvas>
     <script type="module" src="src/main.ts"></script>
 </body>

@@ -1311,3 +1311,33 @@ canvas {
     color: var(--color-ornament-light);
     transform: rotate(45deg);
 }
+
+/* ── MODAIS GERAIS (Sobreposição) ── */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background: linear-gradient(180deg, var(--color-character-panel-top) 0%, var(--color-character-panel-bottom) 100%);
+    border: 1px solid var(--color-character-panel-border);
+    border-radius: 4px;
+    padding: 20px;
+    width: 90%;
+    max-width: 550px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+}
+
+textarea.character-menu-input {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid var(--color-ornament-dark);
+    color: #00ff00; /* Cor verde estilo terminal para ajudar a ler o JSON */
+}

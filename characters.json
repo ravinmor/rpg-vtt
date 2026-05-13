@@ -1,0 +1,53 @@
+{
+  "name": "Carlos Alberto Brilhante Ustra",
+  "charClass": "Barbarian",
+  "level": 5,
+  "hp": 65,
+  "maxHp": 65,
+  "tempHp": 0,
+  "ac": 15,
+  "speed": 12,
+  "passivePerception": 13,
+  "attributes": {
+    "str": 4,
+    "dex": 2,
+    "con": 3,
+    "int": -1,
+    "wis": 1,
+    "cha": -1
+  },
+  "skills": {
+    "acrobatics": 2,
+    "animalHandling": 4,
+    "arcana": -1,
+    "athletics": 7,
+    "deception": -1,
+    "history": -1,
+    "insight": 1,
+    "intimidation": 2,
+    "investigation": -1,
+    "medicine": 1,
+    "nature": -1,
+    "perception": 3,
+    "performance": -1,
+    "persuasion": -1,
+    "religion": -1,
+    "sleightOfHand": 2,
+    "stealth": 2,
+    "survival": 4
+  },
+  "resources": {
+    "rage": {
+      "current": 2,
+      "max": 3
+    }
+  },
+  "spellSlots": {},
+  "statuses": [],
+  "x": 1000,
+  "y": 120,
+  "radius": 30,
+  "color": "#e67e22",
+  "initiative": 0,
+  "isTurn": false
+}

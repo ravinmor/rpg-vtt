@@ -4,7 +4,7 @@ import { bestiaryDatabase } from '../data/bestiary';
 
 // Estado do Combate
 export let activeTurnIndex = -1;
-
+const STORAGE_KEY = 'vtt_active_characters';
 /**
  * Altera o HP de um personagem e atualiza a interface
  */
@@ -152,4 +152,28 @@ export function registerNewCharacter(characterData: any) {
     
     // Se você tiver um sistema de eventos para avisar que o estado mudou:
     // emitStateChange(); 
+}
+
+export function saveToLocalStorage(characters: any[]) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(characters));
+    } catch (e) {
+        console.error("Erro ao salvar no LocalStorage", e);
+    }
+}
+
+/**
+ * Recupera os personagens salvos
+ */
+export function loadFromLocalStorage(): any[] {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+        try {
+            return JSON.parse(saved);
+        } catch (e) {
+            console.error("Erro ao ler LocalStorage", e);
+            return [];
+        }
+    }
+    return [];
 }
