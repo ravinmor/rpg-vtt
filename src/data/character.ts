@@ -25,7 +25,7 @@ export const characters: Character[] = [
         size: 'medium', 
         x: 1100, y: 300, radius: TOKEN_SIZE.medium, color: '#3498db', initiative: 0, isTurn: false,
         visuals: {
-            token_img: 'https://i.etsystatic.com/45504153/r/il/85124d/6064743807/il_1588xN.6064743807_6kkg.jpg',
+            token_img: 'https://oldschooldnd.westhistory.net/uploads/6/4/3/0/6430621/published/fighter-image.jpg?1607898821',
             aura_preset: 'steel_blue',
             scale: 1.1
         }
@@ -111,7 +111,7 @@ export const characters: Character[] = [
         size: 'medium',
         x: 1000, y: 440, radius: TOKEN_SIZE.medium, color: '#e74c3c', initiative: 0, isTurn: false,
         visuals: {
-            token_img: 'https://www.enworld.org/attachments/th-18483468401-765x1078-png.133719/',
+            token_img: 'https://oldschooldnd.westhistory.net/uploads/6/4/3/0/6430621/published/wizard-image.png?250',
             aura_preset: 'arcane_rings',
             scale: 1.0
         }

@@ -2,20 +2,6 @@
 import * as PIXI from 'pixi.js'
 import { layerEffects } from './scene'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ARQUITETURA DE MASCARAMENTO NO PIXI V8
-//
-// container.mask = Graphics funciona APENAS se o Graphics NÃO for filho
-// do container que ele está mascarando. A solução é:
-//
-//   layerEffects
-//     ├─ maskGfx   (Graphics com o shape — filho direto de layerEffects)
-//     └─ container (filho direto de layerEffects, com container.mask = maskGfx)
-//          └─ sprite / gfx (conteúdo real)
-//
-// Guardamos maskGfx no mapa separado para poder atualizar e destruir junto.
-// ─────────────────────────────────────────────────────────────────────────────
-
 interface ZoneEntry {
     container: PIXI.Container
     maskGfx:   PIXI.Graphics
@@ -24,13 +10,9 @@ interface ZoneEntry {
 const zoneMap    = new Map<string, ZoneEntry>()
 const assetCache = new Map<string, PIXI.Texture>()
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SYNC (chamado todo frame)
-// ─────────────────────────────────────────────────────────────────────────────
 export function syncEffects(activeZones: any[], editingZone: any) {
     const activeIds = new Set(activeZones.map((z: any) => z.id))
 
-    // Remove zonas que não existem mais
     for (const [id, entry] of zoneMap) {
         if (!activeIds.has(id)) {
             layerEffects.removeChild(entry.container)
@@ -44,14 +26,11 @@ export function syncEffects(activeZones: any[], editingZone: any) {
     activeZones.forEach((zone: any) => {
         if (!zone.id) zone.id = `zone_${Date.now()}_${Math.random()}`
 
-        let entry = zoneMap.get(zone.id);
+        let entry = zoneMap.get(zone.id)
 
-        // Recria se o tipo de asset mudou
         const newAssetUrl = zone.videoPath || zone.imagePath || null
         if (entry && (entry.container as any).__assetUrl !== newAssetUrl) {
-            // Adicione esta proteção:
-            if (zone.type === 'text') { /* não recria */ }
-            else {
+            if (zone.type !== 'text') {
                 layerEffects.removeChild(entry.container)
                 layerEffects.removeChild(entry.maskGfx)
                 entry.container.destroy({ children: true })
@@ -83,9 +62,8 @@ function createZoneEntry(zone: any): ZoneEntry {
     container.mask  = maskGfx
     layerEffects.addChild(container)
 
-    // Texto não precisa de sprite nem asset
     if (zone.type === 'text') {
-        container.mask = null  // ← sem máscara para texto
+        container.mask = null
         const fallback = new PIXI.Graphics()
         fallback.label = 'fallback'
         container.addChild(fallback)
@@ -100,7 +78,6 @@ function createZoneEntry(zone: any): ZoneEntry {
     ;(container as any).__assetUrl = assetUrl
 
     if (assetUrl) {
-        // Sprite começa invisível; aparece quando o asset carregar
         const sprite = new PIXI.Sprite(PIXI.Texture.EMPTY)
         sprite.label  = 'content'
         sprite.anchor.set(0.5)
@@ -110,12 +87,10 @@ function createZoneEntry(zone: any): ZoneEntry {
         loadAsset(assetUrl, sprite)
     }
 
-    // Gráfico de fallback (cor sólida enquanto carrega, ou sem asset)
     const fallback = new PIXI.Graphics()
     fallback.label = 'fallback'
     container.addChild(fallback)
 
-    // Gráfico de borda de seleção
     const border = new PIXI.Graphics()
     border.label = 'border'
     container.addChild(border)
@@ -125,27 +100,37 @@ function createZoneEntry(zone: any): ZoneEntry {
 
 function loadAsset(url: string, sprite: PIXI.Sprite) {
     if (assetCache.has(url)) {
-        applyTexture(sprite, assetCache.get(url)!)
+        applyTexture(sprite, assetCache.get(url)!, url)
         return
     }
     PIXI.Assets.load(url)
         .then((tex: PIXI.Texture) => {
             assetCache.set(url, tex)
-            applyTexture(sprite, tex)
+            applyTexture(sprite, tex, url)
         })
         .catch(() => console.warn('[effectDrawer] Falha ao carregar:', url))
 }
 
-function applyTexture(sprite: PIXI.Sprite, tex: PIXI.Texture) {
+function applyTexture(sprite: PIXI.Sprite, tex: PIXI.Texture, url: string) {
     sprite.texture = tex
     sprite.visible = true
 
     const src   = tex.source as any
-    const video = src?.resource instanceof HTMLVideoElement ? src.resource as HTMLVideoElement : null
+    const video = src?.resource instanceof HTMLVideoElement
+        ? src.resource as HTMLVideoElement
+        : null
+
     if (video) {
         video.muted = true
         video.loop  = true
         video.play().catch(() => {})
+
+        // Vídeos de magia têm fundo preto — 'screen' faz o preto desaparecer,
+        // mantendo apenas as cores claras do efeito (chamas, névoa, etc.)
+        sprite.blendMode = 'screen'
+    } else {
+        // Texturas de imagem (pedra, grama, madeira) usam blend normal
+        sprite.blendMode = 'normal'
     }
 }
 
@@ -163,8 +148,9 @@ function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
     fallback.clear()
     border.clear()
 
+    // ── Texto ──────────────────────────────────────────────────────────────
     if (zone.type === 'text') {
-        container.mask = null  // ← garante que nunca mascara o texto
+        container.mask = null
 
         let textObj = container.getChildByLabel('pixi-text') as PIXI.Text | null
 
@@ -205,25 +191,20 @@ function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
         const cy = zone.y ?? 0
         const r  = zone.radius ?? 80
 
-        // Máscara: círculo na posição absoluta (maskGfx está em layerEffects, coords do mundo)
         maskGfx.circle(cx, cy, r).fill({ color: 0xffffff })
-
-        // Container na origem — o conteúdo se posiciona absoluto
         container.x = 0
         container.y = 0
 
         if (sprite && sprite.visible) {
-            sprite.x      = cx
-            sprite.y      = cy
-
-            const texW = sprite.texture.width
-            const texH = sprite.texture.height
-            const side = r * 2
-            sprite.scale.set(side / Math.max(texW, texH))  // escala uniforme, mantém proporção quadrada
-            
+            sprite.x     = cx
+            sprite.y     = cy
+            const side   = r * 2
+            const texW   = sprite.texture.width
+            const texH   = sprite.texture.height
+            sprite.scale.set(side / Math.max(texW, texH))
             sprite.alpha = zone.opacity ?? 0.8
+            if (zone.rotateSpeed) sprite.rotation += zone.rotateSpeed
         } else {
-            // Fallback enquanto carrega
             const col = colorToNumber(zone.color) ?? 0x8855ff
             fallback.circle(cx, cy, r).fill({ color: col, alpha: zone.opacity ?? 0.6 })
         }
@@ -234,7 +215,7 @@ function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
         return
     }
 
-    // ── Zonas com path ─────────────────────────────────────────────────────
+    // ── Zonas com path (brush / shapes) ───────────────────────────────────
     if (!zone.path || zone.path.length < 2) return
 
     container.x = 0
@@ -242,7 +223,6 @@ function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
 
     const bb = getBoundingBox(zone.path)
 
-    // Máscara no path (coordenadas do mundo)
     applyPath(maskGfx, zone.path)
     maskGfx.fill({ color: 0xffffff })
 
@@ -253,7 +233,6 @@ function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
         sprite.height = bb.height
         sprite.alpha  = zone.opacity ?? 0.85
     } else {
-        // Fallback: cor ou laranja padrão
         applyPath(fallback, zone.path)
         const col   = colorToNumber(zone.color) ?? 0xff6600
         const alpha = opacityFromRgba(zone.color) ?? zone.opacity ?? 0.5
