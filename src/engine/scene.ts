@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
+import { initGizmo } from './transformGizmo'
 
 export let app: PIXI.Application
 export let viewport: Viewport
@@ -61,4 +62,5 @@ export async function initScene(canvas: HTMLCanvasElement) {
         app.renderer.resize(window.innerWidth, window.innerHeight)
         viewport.resize(window.innerWidth, window.innerHeight)
     })
+    initGizmo();
 }

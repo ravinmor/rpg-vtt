@@ -44,17 +44,21 @@ export function syncEffects(activeZones: any[], editingZone: any) {
     activeZones.forEach((zone: any) => {
         if (!zone.id) zone.id = `zone_${Date.now()}_${Math.random()}`
 
-        let entry = zoneMap.get(zone.id)
+        let entry = zoneMap.get(zone.id);
 
         // Recria se o tipo de asset mudou
         const newAssetUrl = zone.videoPath || zone.imagePath || null
         if (entry && (entry.container as any).__assetUrl !== newAssetUrl) {
-            layerEffects.removeChild(entry.container)
-            layerEffects.removeChild(entry.maskGfx)
-            entry.container.destroy({ children: true })
-            entry.maskGfx.destroy()
-            zoneMap.delete(zone.id)
-            entry = undefined as any
+            // Adicione esta proteção:
+            if (zone.type === 'text') { /* não recria */ }
+            else {
+                layerEffects.removeChild(entry.container)
+                layerEffects.removeChild(entry.maskGfx)
+                entry.container.destroy({ children: true })
+                entry.maskGfx.destroy()
+                zoneMap.delete(zone.id)
+                entry = undefined as any
+            }
         }
 
         if (!entry) {
@@ -70,16 +74,27 @@ export function syncEffects(activeZones: any[], editingZone: any) {
 // CRIAÇÃO
 // ─────────────────────────────────────────────────────────────────────────────
 function createZoneEntry(zone: any): ZoneEntry {
-    // 1. Máscara — filho DIRETO de layerEffects (não do container!)
     const maskGfx = new PIXI.Graphics()
     maskGfx.label = `mask_${zone.id}`
     layerEffects.addChild(maskGfx)
 
-    // 2. Container do conteúdo — também filho direto de layerEffects
     const container = new PIXI.Container()
     container.label = zone.id
-    container.mask  = maskGfx           // ← referência externa, funciona no v8
+    container.mask  = maskGfx
     layerEffects.addChild(container)
+
+    // Texto não precisa de sprite nem asset
+    if (zone.type === 'text') {
+        container.mask = null  // ← sem máscara para texto
+        const fallback = new PIXI.Graphics()
+        fallback.label = 'fallback'
+        container.addChild(fallback)
+        const border = new PIXI.Graphics()
+        border.label = 'border'
+        container.addChild(border)
+        ;(container as any).__assetUrl = null
+        return { container, maskGfx }
+    }
 
     const assetUrl: string | null = zone.videoPath || zone.imagePath || null
     ;(container as any).__assetUrl = assetUrl
@@ -148,6 +163,42 @@ function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
     fallback.clear()
     border.clear()
 
+    if (zone.type === 'text') {
+        container.mask = null  // ← garante que nunca mascara o texto
+
+        let textObj = container.getChildByLabel('pixi-text') as PIXI.Text | null
+
+        if (!textObj) {
+            textObj = new PIXI.Text({
+                text: zone.text || '',
+                style: {
+                    fontFamily: zone.fontFamily || "'Cinzel', serif",
+                    fontSize:   zone.fontSize   || 24,
+                    fill:       0xf0b030,
+                    stroke:     { color: 0x000000, width: 4 },
+                    dropShadow: {
+                        color:    0x000000,
+                        blur:     4,
+                        distance: 2,
+                        alpha:    0.8,
+                    },
+                }
+            })
+            textObj.label = 'pixi-text'
+            textObj.anchor.set(0.5)
+            container.addChild(textObj)
+        }
+
+        textObj.text           = zone.text || ''
+        textObj.x              = zone.x    || 0
+        textObj.y              = zone.y    || 0
+        textObj.rotation       = zone.rotation || 0
+        textObj.style.fontSize = zone.fontSize || 24
+        container.x = 0
+        container.y = 0
+        return
+    }
+
     // ── spell_object ───────────────────────────────────────────────────────
     if (zone.type === 'spell_object') {
         const cx = zone.x ?? 0
@@ -164,10 +215,13 @@ function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
         if (sprite && sprite.visible) {
             sprite.x      = cx
             sprite.y      = cy
-            sprite.width  = r * 2
-            sprite.height = r * 2
-            sprite.alpha  = zone.opacity ?? 0.8
-            if (zone.rotateSpeed) sprite.rotation += zone.rotateSpeed
+
+            const texW = sprite.texture.width
+            const texH = sprite.texture.height
+            const side = r * 2
+            sprite.scale.set(side / Math.max(texW, texH))  // escala uniforme, mantém proporção quadrada
+            
+            sprite.alpha = zone.opacity ?? 0.8
         } else {
             // Fallback enquanto carrega
             const col = colorToNumber(zone.color) ?? 0x8855ff

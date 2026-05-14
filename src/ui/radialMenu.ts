@@ -3,6 +3,7 @@ import { state } from '../state/globalState';
 import { menuDatabase } from '../data/menu';
 import { spellDatabase } from '../data/spells';
 import { getBoundingBox } from '../utils/math';
+import { gizmo } from '../engine/transformGizmo';
 
 export function applySpellObject(spellData: any) {
     if (!state.pendingSpellPoint) return;
@@ -94,6 +95,7 @@ export function deleteEffect(e: any) {
         state.activeZones = state.activeZones.filter(z => z !== state.editingZone);
         state.editingZone = null;
     }
+    gizmo.detach();
     closeMenu(null);
 }
 

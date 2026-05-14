@@ -39,7 +39,7 @@ export interface FeatureItem {
 // O TIPO PRINCIPAL
 export interface Character {
     // ── Identificação ──
-    id: string | number;
+    id: string;
     name: string;
     charClass: string;
     level: number;
@@ -68,6 +68,7 @@ export interface Character {
 
     // ── Estado Atual (Buffs/Debuffs) ──
     statuses: string[];
+    size: string;
 
     // ── Instância no Mapa (Dados que mudam a cada turno/movimento) ──
     x: number;

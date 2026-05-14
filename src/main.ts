@@ -13,6 +13,7 @@ import * as RadialMenu from './ui/radialMenu';
 import * as BestiaryUI from './ui/bestiaryUI';
 import { loadFromLocalStorage } from './state/gameState';
 import { initScene, app, viewport } from './engine/scene';
+import { gizmo } from './engine/transformGizmo';
 
 // ======================================================
 // CANVAS E CONTEXTO
@@ -692,34 +693,52 @@ w.spawn = (id: string) => {
 
 async function bootstrap() {
     await initScene(canvas);
+
     window.addEventListener('pointerdown', () => {
-        // No v8, apenas interagir já costuma destravar o VideoSource do Pixi
         console.log("Interação detectada, vídeos destravados.");
     }, { once: true });
-    // MouseEvents agora precisam saber converter coordenadas da tela para o Mundo Pixi
-    initMouseEvents(canvas, null as any, state, mouseTools);
 
+    initMouseEvents(canvas, null as any, state, mouseTools);
     BestiaryUI.populateMonsterSelect();
 
-    // Carregamento de dados
+    // Lógica correta:
+    // - Se character.ts tem personagens, eles são a fonte da verdade
+    // - localStorage só é usado para monstros spawnados (isNPC: true)
+    //   e para salvar o estado de HP/status dos personagens entre sessões
     const savedChars = loadFromLocalStorage();
+
     if (savedChars.length > 0) {
-        characters.push(...savedChars);
+        // Restaura HP e status dos personagens fixos do character.ts
+        characters.forEach(char => {
+            const saved = savedChars.find((s: any) => s.id === char.id)
+            if (saved) {
+                char.hp       = saved.hp
+                char.tempHp   = saved.tempHp
+                char.statuses = saved.statuses
+                char.initiative = saved.initiative
+                char.x        = saved.x
+                char.y        = saved.y
+            }
+        })
+
+        // Adiciona só os NPCs/monstros spawnados (não os personagens fixos)
+        const spawnedNPCs = savedChars.filter((s: any) => 
+            s.isNPC && !characters.find(c => c.id === s.id)
+        )
+        if (spawnedNPCs.length > 0) {
+            characters.push(...spawnedNPCs)
+        }
     }
 
-    // O LOOP DE ANIMAÇÃO AGORA É O TICKER DO PIXI
     app.ticker.add(() => {
-        state.concentrationPulse += 0.08;
-
-        // Atualiza as camadas do PixiJS
-        Renderer.drawGrid(BASE_GRID_SIZE, state.gridScale);
-        Renderer.drawBackground(state.currentBackground); // Passa o ID do fundo
-
-        syncEffects(state.activeZones, state.editingZone);
-        syncTokens(characters, state.tokenScale, state.selectedCharacter?.id);
-        syncUI(state);
-        console.log(state.activeZones)
-    });
+        state.concentrationPulse += 0.08
+        Renderer.drawGrid(BASE_GRID_SIZE, state.gridScale)
+        Renderer.drawBackground(state.currentBackground)
+        syncEffects(state.activeZones, state.editingZone)
+        syncTokens(characters, state.tokenScale, state.selectedCharacter?.id)
+        syncUI(state)
+        gizmo.tick()
+    })
 
     renderInitiativeList();
 }

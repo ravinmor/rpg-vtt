@@ -11,6 +11,7 @@ export interface Monster {
     id: string;
     name: string;
     category: string;
+    tamanho: string;
     size: string;
     challenge_rating: string;
     combat: CombatStats;

@@ -1,6 +1,7 @@
 // src/engine/characterDrawer.ts
 import * as PIXI from 'pixi.js'
 import { layerTokens } from './scene'
+import { TOKEN_SIZE } from '../data/constants'
 
 const tokenMap = new Map<string, PIXI.Container>()
 
@@ -86,14 +87,21 @@ function updateToken(
     tokenScale: number,
     selectedId: string | null
 ) {
-    const r        = char.radius * tokenScale
-    const hpRatio  = char.maxHp > 0 ? Math.max(0, char.hp) / char.maxHp : 0
-    const ringColor = hpRatio > 0.6 ? 0x4bdc7b : hpRatio > 0.3 ? 0xe6c84f : 0xd94b4b
-    const baseColor = colorToNumber(char.color)
-    const isSelected = selectedId === char.id
+    // ── Cálculo do Raio Baseado no Size ──
+    // Se char.size existir (ex: 'small'), pega no dicionário. 
+    // Caso contrário, tenta usar o radius antigo ou assume 'medium' como padrão.
+    const baseRadius = TOKEN_SIZE[char.size] || char.radius || TOKEN_SIZE.medium;
+    
+    // Agora o 'r' final leva em conta o tamanho da ficha e o zoom do usuário
+    const r = baseRadius * tokenScale;
 
-    container.x = char.x
-    container.y = char.y
+    const hpRatio  = char.maxHp > 0 ? Math.max(0, char.hp) / char.maxHp : 0;
+    const ringColor = hpRatio > 0.6 ? 0x4bdc7b : hpRatio > 0.3 ? 0xe6c84f : 0xd94b4b;
+    const baseColor = colorToNumber(char.color);
+    const isSelected = selectedId === char.id;
+
+    container.x = char.x;
+    container.y = char.y;
 
     // ── Corpo ──
     const circle = container.getChildByLabel('body') as PIXI.Graphics

@@ -5,9 +5,6 @@ export const state = {
     currentBackground: 'none', 
     backgroundSelect: document.getElementById('background-select') as HTMLSelectElement,
     editingZone: null as any,
-    isResizing: false,
-    resizeStartPoint: null as any,
-    originalEditPath: null as any,
     gesturePoints: [] as any[],
     activeZones: [] as any[],
     isDrawingCircle: false,
@@ -39,8 +36,6 @@ export const state = {
     mouseDownPoint: null as any,
     currentMenuStack: [menuDatabase],
     potentialZone: null as any,
-    isRotating: false,
-    originalFontSize: 24,
     // Capturamos os elementos DOM que o mouse precisa
     sideMenu: document.getElementById('side-menu'),
     characterMenu: document.getElementById('character-menu'),

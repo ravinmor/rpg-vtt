@@ -1,8 +1,8 @@
 // src/events/mouseHandlers.ts
 import { menuDatabase } from "../data/menu";
 import { spellDatabase } from "../data/spells";
-import { generateShapePath, getBoundingBox, isPointInPolygon } from "../utils/math";
-import { editHandles } from "../engine/uiDrawer";
+import { generateShapePath, isPointInPolygon } from "../utils/math";
+import { gizmo } from '../engine/transformGizmo';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TEXTO INLINE
@@ -36,24 +36,28 @@ function spawnTextInput(clientX: number, clientY: number, mapX: number, mapY: nu
     document.body.appendChild(input);
     setTimeout(() => input.focus(), 10);
 
+    // DEPOIS:
+    let finished = false
     function finishEditing() {
-        const text = input.value.trim();
+        if (finished) return  // ← evita dupla chamada
+        finished = true
+        const text = input.value.trim()
         if (text) {
             state.activeZones.push({
                 type: 'text', text, x: mapX, y: mapY,
                 fontSize: 24, rotation: 0,
                 color: titleColor, fontFamily: titleFont,
-            });
+            })
         }
-        input.remove();
-        if (typeof (window as any).setTool === 'function') (window as any).setTool('select');
+        input.remove()
+        if (typeof (window as any).setTool === 'function') (window as any).setTool('select')
     }
 
-    input.addEventListener('blur', finishEditing);
+    input.addEventListener('blur', finishEditing)
     input.addEventListener('keydown', (e: KeyboardEvent) => {
-        if (e.key === 'Enter') { e.preventDefault(); finishEditing(); }
-        if (e.key === 'Escape') input.remove();
-    });
+        if (e.key === 'Enter') { e.preventDefault(); finishEditing() }
+        if (e.key === 'Escape') { finished = true; input.remove() }
+    })
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,87 +88,64 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
         state.mouseDownPoint = coords;
 
         if (state.currentDrawMode === 'select') {
-
-            // ── 0. Handle de RESIZE (tem prioridade máxima) ──────────────────
-            if (state.editingZone && hitHandle(editHandles.resize, mx, my)) {
-                state.isResizing        = true;
-                state.isDraggingZone    = false;
-                state.resizeStartPoint  = { x: mx, y: my };
-
-                if (state.editingZone.path) {
-                    state.originalEditPath = JSON.parse(JSON.stringify(state.editingZone.path));
-                }
-                if (state.editingZone.type === 'text') {
-                    state.originalFontSize = state.editingZone.fontSize;
-                }
-                return;
-            }
-
-            // ── 0b. Handle de ROTATE ─────────────────────────────────────────
-            if (state.editingZone && hitHandle(editHandles.rotate, mx, my)) {
-                state.isRotating     = true;
-                state.isDraggingZone = false;
-                if (state.editingZone.path) {
-                    state.originalEditPath  = JSON.parse(JSON.stringify(state.editingZone.path));
-                    state.rotateCenter      = getBoundingBoxCenter(state.editingZone.path);
-                    state.rotateStartAngle  = Math.atan2(my - state.rotateCenter.y, mx - state.rotateCenter.x);
-                    state.rotateOriginalPath = JSON.parse(JSON.stringify(state.editingZone.path));
-                } else if (state.editingZone.type === 'spell_object') {
-                    // spell_object: guardamos só para consistência, rotação visual é livre
-                    state.rotateCenter = { x: state.editingZone.x, y: state.editingZone.y };
-                }
-                return;
-            }
-
-            // ── 1. Token ─────────────────────────────────────────────────────
-            const clickedCharacter = tools.getCharacterAtPosition(mx, my);
-            if (clickedCharacter) {
-                state.selectedCharacter  = clickedCharacter;
-                tools.updateCharacterPanels();
-                state.isDraggingToken    = true;
-                state.tokenDragStart     = coords;
-                state.tokenHasMoved      = false;
-                tools.closeCharacterMenu();
-                return;
-            }
-
-            // ── 2. Zona / Efeito ─────────────────────────────────────────────
-            let hitZone = false;
-            for (let i = state.activeZones.length - 1; i >= 0; i--) {
-                const zone = state.activeZones[i];
-                let hit = false;
-
-                if (zone.type === 'spell_object') {
-                    hit = Math.hypot(mx - zone.x, my - zone.y) <= zone.radius;
-                } else if (zone.path && zone.path.length > 0) {
-                    hit = isPointInPolygon({ x: mx, y: my }, zone.path);
-                } else if (zone.type === 'text') {
-                    const width = (zone.text.length * zone.fontSize) * 0.6;
-                    hit = Math.abs(mx - zone.x) < width / 2 && Math.abs(my - zone.y) < zone.fontSize / 2;
-                }
-
-                if (hit) {
-                    state.editingZone       = zone;
-                    state.isDraggingZone    = true;
-                    state.zoneDragStartPoint = { x: mx, y: my };
-
-                    if (zone.type === 'spell_object' || zone.type === 'text') {
-                        state.originalSpellCenter = { x: zone.x, y: zone.y };
-                    } else {
-                        state.originalEditPath = JSON.parse(JSON.stringify(zone.path));
-                    }
-                    hitZone = true;
-                    break;
-                }
-            }
-
-            if (!hitZone) {
-                // Clicou no vazio — deseleciona
-                state.selectedCharacter = null;
-                state.editingZone       = null;
-            }
-            return;
+ 
+        // ── 0. Gizmo nativo do PixiJS (resize / rotate) ──────────────────────
+        // Os handles são containers Pixi com eventos próprios (pointerdown).
+        // Se o clique atingiu um handle, o gizmo já iniciou o drag internamente.
+        // Só precisamos impedir que o mousedown continue para token/zona.
+        if (gizmo.hitsHandle(mx, my)) return
+ 
+        // ── 1. Token ──────────────────────────────────────────────────────────
+        const clickedCharacter = tools.getCharacterAtPosition(mx, my)
+        if (clickedCharacter) {
+            state.selectedCharacter = clickedCharacter
+            tools.updateCharacterPanels()
+            state.isDraggingToken   = true
+            state.tokenDragStart    = coords
+            state.tokenHasMoved     = false
+            tools.closeCharacterMenu()
+            gizmo.detach()          // deseleciona zona ao clicar num token
+            return
         }
+ 
+        // ── 2. Zona / Efeito ──────────────────────────────────────────────────
+        let hitZone = false
+        for (let i = state.activeZones.length - 1; i >= 0; i--) {
+            const zone = state.activeZones[i]
+            let hit = false
+ 
+            if (zone.type === 'spell_object') {
+                hit = Math.hypot(mx - zone.x, my - zone.y) <= zone.radius
+            } else if (zone.path && zone.path.length > 0) {
+                hit = isPointInPolygon({ x: mx, y: my }, zone.path)
+            } else if (zone.type === 'text') {
+                const width = (zone.text.length * zone.fontSize) * 0.6
+                hit = Math.abs(mx - zone.x) < width / 2 && Math.abs(my - zone.y) < zone.fontSize / 2
+            }
+ 
+            if (hit) {
+                state.editingZone        = zone
+                state.isDraggingZone     = true
+                state.zoneDragStartPoint = { x: mx, y: my }
+                gizmo.attach(zone)          // ← mostra o gizmo na zona clicada
+ 
+                if (zone.type === 'spell_object' || zone.type === 'text') {
+                    state.originalSpellCenter = { x: zone.x, y: zone.y }
+                } else {
+                    state.originalEditPath = JSON.parse(JSON.stringify(zone.path))
+                }
+                hitZone = true
+                break
+            }
+        }
+ 
+        if (!hitZone) {
+            state.selectedCharacter = null
+            state.editingZone       = null
+            gizmo.detach()          // ← esconde o gizmo ao clicar no vazio
+        }
+        return
+    }
 
         // ── MODOS DE DESENHO ─────────────────────────────────────────────────
         if (state.currentDrawMode === 'text') {
@@ -310,14 +291,6 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
             (e.target as HTMLElement).closest?.('#side-menu')         ||
             (e.target as HTMLElement).closest?.('#character-menu'))    return;
 
-        // Finaliza resize / rotate — reabre menu de efeito
-        if (state.isResizing || state.isRotating) {
-            state.isResizing = false;
-            state.isRotating = false;
-            // Mantém editingZone selecionada (não fecha)
-            return;
-        }
-
         // Finaliza drag de zona — reabre menu de efeito
         if (state.isDraggingZone) {
             state.isDraggingZone = false;
@@ -387,6 +360,7 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
             state.activeZones = state.activeZones.filter((z: any) => z !== state.editingZone);
             state.editingZone = null;
             if (state.menu) state.menu.style.display = 'none';
+            gizmo.detach(); // ← isso estava faltando
         }
     });
 
