@@ -1,302 +1,252 @@
 // src/engine/effectDrawer.ts
-import { getBoundingBox } from '../utils/math';
+import * as PIXI from 'pixi.js'
+import { layerEffects } from './scene'
 
-// ==========================================
-// TRUQUE DE MESTRE: Canvas Invisível para a Máscara
-// ==========================================
-const maskCanvas = document.createElement('canvas');
-const maskCtx = maskCanvas.getContext('2d');
+// ─────────────────────────────────────────────────────────────────────────────
+// ARQUITETURA DE MASCARAMENTO NO PIXI V8
+//
+// container.mask = Graphics funciona APENAS se o Graphics NÃO for filho
+// do container que ele está mascarando. A solução é:
+//
+//   layerEffects
+//     ├─ maskGfx   (Graphics com o shape — filho direto de layerEffects)
+//     └─ container (filho direto de layerEffects, com container.mask = maskGfx)
+//          └─ sprite / gfx (conteúdo real)
+//
+// Guardamos maskGfx no mapa separado para poder atualizar e destruir junto.
+// ─────────────────────────────────────────────────────────────────────────────
 
-export function drawActiveZones(ctx, canvas, activeZones, editingZone) {
-    activeZones.forEach((zone) => {
-        ctx.save();
-
-        if (zone.type === 'spell_object') {
-            renderSpellObject(ctx, zone, editingZone);
-        } 
-        else if (zone.path && zone.path.length > 0) {
-            renderDrawnArea(ctx, canvas, zone, editingZone);
-        }else if (zone.type === 'text') {
-            const fontFamily = zone.fontFamily || 'Arial';
-            ctx.font = `bold ${zone.fontSize}px ${fontFamily}`;
-            
-            const width = ctx.measureText(zone.text).width;
-            const height = zone.fontSize; // Altura aproximada baseada na fonte
-            
-            // Move o canvas para o centro do texto e aplica a rotação
-            ctx.translate(zone.x, zone.y);
-            ctx.rotate(zone.rotation || 0);
-
-            // Alinhamento centralizado
-            ctx.textBaseline = 'middle';
-            ctx.textAlign = 'center';
-            
-            // Desenha a BORDA PRETA fina (Stroke)
-            ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 3;
-            ctx.lineJoin = 'round';
-            ctx.strokeText(zone.text, 0, 0);
-
-            // Desenha o PREENCHIMENTO com a cor do título
-            ctx.fillStyle = zone.color || '#f0b030';
-            ctx.fillText(zone.text, 0, 0);
-
-            // Borda de seleção e Handles se estiver editando
-            if (editingZone === zone) {
-                const hw = width / 2;
-                const hh = height / 2;
-
-                // Caixa ao redor
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]);
-                ctx.strokeRect(-hw - 8, -hh - 8, width + 16, height + 16);
-                ctx.setLineDash([]);
-
-                // Alça de Zoom (Quadrado no canto inferior direito)
-                ctx.fillStyle = '#ffffff';
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 1;
-                ctx.fillRect(hw, hh, 12, 12);
-                ctx.strokeRect(hw, hh, 12, 12);
-
-                // Alça de Rotação (Uma "antena" com um círculo no topo)
-                ctx.beginPath();
-                ctx.moveTo(0, -hh - 8);
-                ctx.lineTo(0, -hh - 30);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.arc(0, -hh - 30, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-                
-                // Alça de Deletar (Círculo vermelho com "X" no canto superior direito)
-                ctx.beginPath();
-                ctx.arc(hw + 10, -hh - 10, 10, 0, Math.PI * 2);
-                ctx.fillStyle = '#ff4444'; // Vermelho
-                ctx.fill();
-                ctx.strokeStyle = '#ffffff'; // Borda branca
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // Desenha o "X"
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 12px Arial';
-                ctx.textBaseline = 'middle';
-                ctx.textAlign = 'center';
-                ctx.fillText('X', hw + 10, -hh - 10);
-            }
-        }
-
-        ctx.restore();
-    });
+interface ZoneEntry {
+    container: PIXI.Container
+    maskGfx:   PIXI.Graphics
 }
 
-function renderSpellObject(ctx, zone, editingZone) {
-    if (zone.rotateSpeed) {
-        zone.rotation = (zone.rotation || 0) + zone.rotateSpeed;
+const zoneMap    = new Map<string, ZoneEntry>()
+const assetCache = new Map<string, PIXI.Texture>()
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SYNC (chamado todo frame)
+// ─────────────────────────────────────────────────────────────────────────────
+export function syncEffects(activeZones: any[], editingZone: any) {
+    const activeIds = new Set(activeZones.map((z: any) => z.id))
+
+    // Remove zonas que não existem mais
+    for (const [id, entry] of zoneMap) {
+        if (!activeIds.has(id)) {
+            layerEffects.removeChild(entry.container)
+            layerEffects.removeChild(entry.maskGfx)
+            entry.container.destroy({ children: true })
+            entry.maskGfx.destroy()
+            zoneMap.delete(id)
+        }
     }
 
-    // Move o centro do canvas para o centro da magia
-    ctx.translate(zone.x, zone.y);
+    activeZones.forEach((zone: any) => {
+        if (!zone.id) zone.id = `zone_${Date.now()}_${Math.random()}`
 
-    // ==========================================
-    // INÍCIO DO ISOLAMENTO DE ROTAÇÃO
-    // ==========================================
-    ctx.save(); 
-    ctx.rotate(zone.rotation || 0);
+        let entry = zoneMap.get(zone.id)
 
-    if (zone.video) {
-        const r = zone.radius;
-        const diam = r * 2;
-        const vRatio = zone.video.videoWidth / zone.video.videoHeight;
-        
-        let drawWidth = diam, drawHeight = diam;
-
-        if (vRatio > 1) { 
-            drawWidth = drawHeight * vRatio;
-        } else if (vRatio < 1) { 
-            drawHeight = drawWidth / vRatio;
+        // Recria se o tipo de asset mudou
+        const newAssetUrl = zone.videoPath || zone.imagePath || null
+        if (entry && (entry.container as any).__assetUrl !== newAssetUrl) {
+            layerEffects.removeChild(entry.container)
+            layerEffects.removeChild(entry.maskGfx)
+            entry.container.destroy({ children: true })
+            entry.maskGfx.destroy()
+            zoneMap.delete(zone.id)
+            entry = undefined as any
         }
 
-        ctx.globalAlpha = zone.opacity ?? 0.8;
-        ctx.globalCompositeOperation = 'screen'; 
+        if (!entry) {
+            entry = createZoneEntry(zone)
+            zoneMap.set(zone.id, entry)
+        }
 
-        if (zone.fade) {
-            let offsetX = -((drawWidth - diam) / 2);
-            let offsetY = -((drawHeight - diam) / 2);
+        updateZone(entry, zone, editingZone === zone)
+    })
+}
 
-            if (maskCanvas.width !== diam) {
-                maskCanvas.width = diam;
-                maskCanvas.height = diam;
-            } else {
-                if (maskCtx) maskCtx.clearRect(0, 0, diam, diam);
-            }
+// ─────────────────────────────────────────────────────────────────────────────
+// CRIAÇÃO
+// ─────────────────────────────────────────────────────────────────────────────
+function createZoneEntry(zone: any): ZoneEntry {
+    // 1. Máscara — filho DIRETO de layerEffects (não do container!)
+    const maskGfx = new PIXI.Graphics()
+    maskGfx.label = `mask_${zone.id}`
+    layerEffects.addChild(maskGfx)
 
-            if (maskCtx) {
-                maskCtx.globalCompositeOperation = 'source-over';
-                maskCtx.drawImage(zone.video, offsetX, offsetY, drawWidth, drawHeight);
+    // 2. Container do conteúdo — também filho direto de layerEffects
+    const container = new PIXI.Container()
+    container.label = zone.id
+    container.mask  = maskGfx           // ← referência externa, funciona no v8
+    layerEffects.addChild(container)
 
-                maskCtx.globalCompositeOperation = 'destination-in';
-                const gradient = maskCtx.createRadialGradient(r, r, r * 0.5, r, r, r);
-                gradient.addColorStop(0, 'rgba(0, 0, 0, 1)'); 
-                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)'); 
+    const assetUrl: string | null = zone.videoPath || zone.imagePath || null
+    ;(container as any).__assetUrl = assetUrl
 
-                maskCtx.fillStyle = gradient;
-                maskCtx.beginPath();
-                maskCtx.arc(r, r, r, 0, Math.PI * 2);
-                maskCtx.fill();
-            }
+    if (assetUrl) {
+        // Sprite começa invisível; aparece quando o asset carregar
+        const sprite = new PIXI.Sprite(PIXI.Texture.EMPTY)
+        sprite.label  = 'content'
+        sprite.anchor.set(0.5)
+        sprite.visible = false
+        container.addChild(sprite)
 
-            ctx.drawImage(maskCanvas, -r, -r);
+        loadAsset(assetUrl, sprite)
+    }
 
+    // Gráfico de fallback (cor sólida enquanto carrega, ou sem asset)
+    const fallback = new PIXI.Graphics()
+    fallback.label = 'fallback'
+    container.addChild(fallback)
+
+    // Gráfico de borda de seleção
+    const border = new PIXI.Graphics()
+    border.label = 'border'
+    container.addChild(border)
+
+    return { container, maskGfx }
+}
+
+function loadAsset(url: string, sprite: PIXI.Sprite) {
+    if (assetCache.has(url)) {
+        applyTexture(sprite, assetCache.get(url)!)
+        return
+    }
+    PIXI.Assets.load(url)
+        .then((tex: PIXI.Texture) => {
+            assetCache.set(url, tex)
+            applyTexture(sprite, tex)
+        })
+        .catch(() => console.warn('[effectDrawer] Falha ao carregar:', url))
+}
+
+function applyTexture(sprite: PIXI.Sprite, tex: PIXI.Texture) {
+    sprite.texture = tex
+    sprite.visible = true
+
+    const src   = tex.source as any
+    const video = src?.resource instanceof HTMLVideoElement ? src.resource as HTMLVideoElement : null
+    if (video) {
+        video.muted = true
+        video.loop  = true
+        video.play().catch(() => {})
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ATUALIZAÇÃO (todo frame)
+// ─────────────────────────────────────────────────────────────────────────────
+function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
+    const { container, maskGfx } = entry
+
+    const sprite   = container.getChildByLabel('content')  as PIXI.Sprite   | null
+    const fallback = container.getChildByLabel('fallback') as PIXI.Graphics
+    const border   = container.getChildByLabel('border')   as PIXI.Graphics
+
+    maskGfx.clear()
+    fallback.clear()
+    border.clear()
+
+    // ── spell_object ───────────────────────────────────────────────────────
+    if (zone.type === 'spell_object') {
+        const cx = zone.x ?? 0
+        const cy = zone.y ?? 0
+        const r  = zone.radius ?? 80
+
+        // Máscara: círculo na posição absoluta (maskGfx está em layerEffects, coords do mundo)
+        maskGfx.circle(cx, cy, r).fill({ color: 0xffffff })
+
+        // Container na origem — o conteúdo se posiciona absoluto
+        container.x = 0
+        container.y = 0
+
+        if (sprite && sprite.visible) {
+            sprite.x      = cx
+            sprite.y      = cy
+            sprite.width  = r * 2
+            sprite.height = r * 2
+            sprite.alpha  = zone.opacity ?? 0.8
+            if (zone.rotateSpeed) sprite.rotation += zone.rotateSpeed
         } else {
-            ctx.beginPath();
-            ctx.arc(0, 0, r, 0, Math.PI * 2);
-            ctx.clip(); 
-            
-            let offsetX = -(drawWidth / 2);
-            let offsetY = -(drawHeight / 2);
-            
-            ctx.drawImage(zone.video, offsetX, offsetY, drawWidth, drawHeight);
+            // Fallback enquanto carrega
+            const col = colorToNumber(zone.color) ?? 0x8855ff
+            fallback.circle(cx, cy, r).fill({ color: col, alpha: zone.opacity ?? 0.6 })
         }
-    } 
-    else {
-        ctx.beginPath();
-        ctx.arc(0, 0, zone.radius, 0, Math.PI * 2);
-        ctx.clip();
-        
-        if (zone.color) {
-            ctx.fillStyle = zone.color;
-            ctx.globalAlpha = zone.opacity ?? 0.8;
-            ctx.fill();
+
+        if (isEditing) {
+            border.circle(cx, cy, r + 4).stroke({ color: 0xffffff, alpha: 0.9, width: 2 })
         }
+        return
     }
-    
-    // ==========================================
-    // FIM DO ISOLAMENTO DE ROTAÇÃO
-    // ==========================================
-    ctx.restore(); // O vídeo continua girando, mas o canvas "desgira"
 
-    // Indicadores de Seleção (Agora ficam estáticos!)
-    if (editingZone === zone) {
-        ctx.globalAlpha = 1.0;
-        ctx.globalCompositeOperation = 'source-over';
-        
-        ctx.beginPath();
-        ctx.arc(0, 0, zone.radius, 0, Math.PI * 2);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#ffffff';
-        ctx.setLineDash([5, 5]);
-        ctx.stroke();
-        ctx.setLineDash([]);
+    // ── Zonas com path ─────────────────────────────────────────────────────
+    if (!zone.path || zone.path.length < 2) return
 
-        ctx.beginPath();
-        ctx.rect(zone.radius - 5, -5, 10, 10);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+    container.x = 0
+    container.y = 0
+
+    const bb = getBoundingBox(zone.path)
+
+    // Máscara no path (coordenadas do mundo)
+    applyPath(maskGfx, zone.path)
+    maskGfx.fill({ color: 0xffffff })
+
+    if (sprite && sprite.visible) {
+        sprite.x      = bb.minX + bb.width  / 2
+        sprite.y      = bb.minY + bb.height / 2
+        sprite.width  = bb.width
+        sprite.height = bb.height
+        sprite.alpha  = zone.opacity ?? 0.85
+    } else {
+        // Fallback: cor ou laranja padrão
+        applyPath(fallback, zone.path)
+        const col   = colorToNumber(zone.color) ?? 0xff6600
+        const alpha = opacityFromRgba(zone.color) ?? zone.opacity ?? 0.5
+        fallback.fill({ color: col, alpha })
+    }
+
+    if (isEditing) {
+        applyPath(border, zone.path)
+        border.stroke({ color: 0xffffff, alpha: 0.9, width: 2 })
     }
 }
 
-function renderDrawnArea(ctx, canvas, zone, editingZone) {
-    // Proteção contra caminhos inválidos
-    if (!zone.path || zone.path.length < 2) return;
-
-    // 1. Calcula os limites do desenho e as dimensões ANTES de tudo
-    const bb = getBoundingBox(zone.path);
-    const width = bb.maxX - bb.minX;
-    const height = bb.maxY - bb.minY;
-
-    // 2. Traça o caminho da forma desenhada
-    ctx.beginPath();
-    ctx.moveTo(zone.path[0].x, zone.path[0].y);
-    zone.path.forEach((p) => ctx.lineTo(p.x, p.y));
-    ctx.closePath();
-
-    // 3. Salva o contexto ANTES de cortar a área (MUITO IMPORTANTE)
-    ctx.save();
-    ctx.clip(); // Corta os vídeos/cores para não vazarem do desenho
-
-    // Preenchimento interno
-    ctx.globalAlpha = zone.opacity ?? 0.8;
-    if (zone.video) {
-        // Renderiza o vídeo usando o tamanho exato da Bounding Box (não a tela inteira)
-        ctx.drawImage(zone.video, bb.minX, bb.minY, width, height);
-    } else if (zone.image && zone.image.complete) {
-        if (!zone.pattern) zone.pattern = ctx.createPattern(zone.image, 'repeat');
-        if (zone.pattern) {
-            ctx.translate(bb.minX, bb.minY);
-            ctx.fillStyle = zone.pattern;
-            ctx.fillRect(0, 0, width, height);
-            ctx.translate(-bb.minX, -bb.minY);
-        }
-    } else if (zone.color) {
-        ctx.fillStyle = zone.color;
-        ctx.fill();
-    }
-
-    // 4. Efeito especial de Vagalumes
-    if (zone.type === 'fireflies' && zone.particles) {
-        renderParticles(ctx, zone);
-    }
-
-    // 5. RESTAURA o contexto para desfazer o "clip()". 
-    // A partir daqui, as coisas podem ser desenhadas fora dos limites do traço.
-    ctx.restore();
-
-    // 6. Borda da área (agora com opacidade maior para você enxergar e sem ser cortada)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // 7. Renderiza as Linhas e Handles de Edição se estiver selecionada
-    if (editingZone === zone) {
-        ctx.save();
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
-        
-        // Usa as coordenadas e o width/height calculados lá no começo
-        ctx.strokeRect(bb.minX, bb.minY, width, height);
-        ctx.setLineDash([]);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 1;
-
-        // Define as posições das 4 alças nos cantos do retângulo limite
-        const handles = [
-            {x: bb.minX, y: bb.minY}, {x: bb.maxX, y: bb.minY},
-            {x: bb.maxX, y: bb.maxY}, {x: bb.minX, y: bb.maxY}
-        ];
-
-        handles.forEach(h => {
-            ctx.beginPath();
-            ctx.rect(h.x - 5, h.y - 5, 10, 10);
-            ctx.fill();
-            ctx.stroke();
-        });
-        ctx.restore();
-    }
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function applyPath(gfx: PIXI.Graphics, path: {x:number,y:number}[]) {
+    if (!path || path.length < 2) return
+    gfx.moveTo(path[0].x, path[0].y)
+    for (let i = 1; i < path.length; i++) gfx.lineTo(path[i].x, path[i].y)
+    gfx.closePath()
 }
 
-function renderParticles(ctx, zone) {
-    const bb = getBoundingBox(zone.path);
-    zone.particles.forEach(p => {
-        p.x += p.vx; p.y += p.vy;
-        p.alpha += p.pulse;
-        if (p.alpha > 1 || p.alpha < 0.1) p.pulse *= -1;
-        if (p.x < bb.minX) p.x = bb.maxX;
-        if (p.x > bb.maxX) p.x = bb.minX;
-        if (p.y < bb.minY) p.y = bb.maxY;
-        if (p.y > bb.maxY) p.y = bb.minY;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(210, 255, 100, ${Math.max(0, p.alpha)})`;
-        ctx.fill();
-    });
+function getBoundingBox(path: {x:number,y:number}[]) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    path.forEach(p => {
+        if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x
+        if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y
+    })
+    return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY }
+}
+
+function colorToNumber(color: any): number | null {
+    if (color == null) return null
+    if (typeof color === 'number') return color
+    if (typeof color === 'string') {
+        const rgba = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
+        if (rgba) return (parseInt(rgba[1]) << 16) | (parseInt(rgba[2]) << 8) | parseInt(rgba[3])
+        const hex = color.replace('#', '')
+        const exp = hex.length === 3 ? hex.split('').map((c:string) => c+c).join('') : hex
+        const num = parseInt(exp, 16)
+        return isNaN(num) ? null : num
+    }
+    return null
+}
+
+function opacityFromRgba(color: any): number | null {
+    if (typeof color !== 'string') return null
+    const m = color.match(/rgba\(\d+,\s*\d+,\s*\d+,\s*([\d.]+)\)/)
+    return m ? parseFloat(m[1]) : null
 }
