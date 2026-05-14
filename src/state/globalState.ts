@@ -2,8 +2,6 @@
 import { menuDatabase } from '../data/menu';
 
 export const state = {
-    currentBackground: 'none', 
-    backgroundSelect: document.getElementById('background-select') as HTMLSelectElement,
     editingZone: null as any,
     gesturePoints: [] as any[],
     activeZones: [] as any[],

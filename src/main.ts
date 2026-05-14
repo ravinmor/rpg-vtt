@@ -1,4 +1,3 @@
-import { backgroundDefinitions } from './data/background';
 import { characters } from './data/character';
 import { createImage, loadStatusIcons } from './utils/images';
 import { statusDefinitions, statusLabelMap, BASE_GRID_SIZE } from './data/constants';
@@ -78,16 +77,6 @@ function updateCharacterPanels() {
 // INICIALIZAÇÃO
 // ======================================================
 const statusIcons = loadStatusIcons();
-
-// ======================================================
-// BACKGROUND ASSETS
-// ======================================================
-export const backgroundAssets = Object.fromEntries(
-    Object.entries(backgroundDefinitions).map(([key, config]) => [
-        key,
-        { image: createImage(config.path), repeat: config.repeat }
-    ])
-);
 
 // Carrega personagens: prioriza character.ts, cai para localStorage se vazio
 if (characters.length === 0) {
@@ -386,10 +375,6 @@ function toggleSideMenu() {
     sideMenu.classList.toggle('collapsed');
 }
 
-function setBackground(type: string) {
-    state.currentBackground = type;
-}
-
 function toggleGrid() {
     state.showGrid = !state.showGrid;
     document.getElementById('btn-grid')?.classList.toggle('active', state.showGrid);
@@ -628,7 +613,6 @@ const mouseTools = {
 // ======================================================
 
 w.toggleSideMenu = () => sideMenu.classList.toggle('collapsed');
-w.setBackground = (type: string) => state.currentBackground = type;
 w.toggleGrid = () => {
     state.showGrid = !state.showGrid;
     document.getElementById('btn-grid')?.classList.toggle('active', state.showGrid);
@@ -733,7 +717,6 @@ async function bootstrap() {
     app.ticker.add(() => {
         state.concentrationPulse += 0.08
         Renderer.drawGrid(BASE_GRID_SIZE, state.gridScale)
-        Renderer.drawBackground(state.currentBackground)
         syncEffects(state.activeZones, state.editingZone)
         syncTokens(characters, state.tokenScale, state.selectedCharacter?.id)
         syncUI(state)

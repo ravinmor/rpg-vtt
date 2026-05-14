@@ -5,7 +5,6 @@ import { initGizmo } from './transformGizmo'
 export let app: PIXI.Application
 export let viewport: Viewport
 
-export let layerBackground: PIXI.Container
 export let layerEffects: PIXI.Container
 export let layerGrid: PIXI.Graphics
 export let layerTokens: PIXI.Container
@@ -44,13 +43,11 @@ export async function initScene(canvas: HTMLCanvasElement) {
     app.stage.addChild(viewport)
 
     // Camadas em ordem (z-index implícito pela ordem de addChild)
-    layerBackground = new PIXI.Container()
     layerEffects    = new PIXI.Container()
     layerGrid       = new PIXI.Graphics()
     layerTokens     = new PIXI.Container()
     layerUI         = new PIXI.Container()
 
-    viewport.addChild(layerBackground)
     viewport.addChild(layerEffects)
     viewport.addChild(layerGrid)
     viewport.addChild(layerTokens)
