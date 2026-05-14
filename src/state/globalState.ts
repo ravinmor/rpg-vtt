@@ -19,7 +19,7 @@ export const state = {
     isDraggingCharacterMenu: false,
     characterMenuDragOffset: { x: 0, y: 0 },
     pendingSpellPoint: null as any,
-    currentDrawMode: 'brush',
+    currentDrawMode: 'select',
     isDrawingShape: false,
     shapeStart: null as any,
     shapeEnd: null as any,

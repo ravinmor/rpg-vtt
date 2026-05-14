@@ -676,8 +676,7 @@ w.spawn = (id: string) => {
 };
 
 async function bootstrap() {
-    await initScene(canvas);
-
+await initScene(canvas);
     window.addEventListener('pointerdown', () => {
         console.log("Interação detectada, vídeos destravados.");
     }, { once: true });
