@@ -5,12 +5,19 @@ import { spellDatabase } from '../data/spells';
 import { getBoundingBox } from '../utils/math';
 import { gizmo } from '../engine/transformGizmo';
 
+const w = (window as any);
+
 export function applySpellObject(spellData: any) {
     if (!state.pendingSpellPoint) return;
 
+    const currentFolder = state.currentMenuStack[state.currentMenuStack.length - 1];
+    const folderLabel = currentFolder.label || "Geral";
+
     const newSpell = {
-        type: 'spell_object',
         id: `spell_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+        name: spellData.label,
+        type: 'spell_object',
+        category: folderLabel,
         x: state.pendingSpellPoint.x,
         y: state.pendingSpellPoint.y,
         radius:      spellData.radius      || 100,
@@ -26,12 +33,15 @@ export function applySpellObject(spellData: any) {
 
     state.activeZones.push(newSpell);
     state.pendingSpellPoint = null;
+    w.renderLayersList();
 
-    if ((window as any).setTool) (window as any).setTool('select');
+    if (w.setTool) w.setTool('select');
 }
 
 export function setEffect(item: any, e: any) {
     if (e) e.stopPropagation();
+    const currentFolder = state.currentMenuStack[state.currentMenuStack.length - 1];
+    const folderLabel = currentFolder.label || "Geral";
 
     // Partículas (vagalumes)
     const bb = getBoundingBox(
@@ -39,6 +49,7 @@ export function setEffect(item: any, e: any) {
             ? state.lastCirclePath
             : (state.editingZone ? state.editingZone.path : [])
     );
+
     const particles: any[] = [];
     if (item.id === 'fireflies') {
         for (let i = 0; i < 35; i++) {
@@ -55,11 +66,13 @@ export function setEffect(item: any, e: any) {
     }
 
     const zoneData: any = {
-        id:        `zone_${Date.now()}`,
+        id: `zone_${Date.now()}`,
+        type:      item.type,
+        name:      item.label,
+        category:    folderLabel,
         path:      state.lastCirclePath.length > 0
                        ? [...state.lastCirclePath]
                        : (state.editingZone ? state.editingZone.path : []),
-        type:      item.id,
         // ← Apenas strings; effectDrawer faz o carregamento
         videoPath: item.videoPath  || null,
         imagePath: item.imagePath  || null,
@@ -86,6 +99,13 @@ export function setEffect(item: any, e: any) {
         state.activeZones.push(zoneData);
     }
 
+    if (typeof w.setTool === 'function') {
+        w.setTool('select');
+    }
+
+    if (typeof w.renderLayersList === 'function') {
+        w.renderLayersList();
+    }
     closeMenu(null);
 }
 
@@ -96,6 +116,7 @@ export function deleteEffect(e: any) {
         state.editingZone = null;
     }
     gizmo.detach();
+    w.renderLayersList();
     closeMenu(null);
 }
 
@@ -103,6 +124,7 @@ export function clearArea() {
     state.activeZones = [];
     state.gesturePoints = [];
     state.pendingMenuPoint = null;
+    w.renderLayersList();
     closeMenu(null);
 }
 

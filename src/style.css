@@ -202,8 +202,8 @@ canvas {
 
 /* ══ HEADER ══ */
 .panel-header {
-    padding: 10px 10px 8px;
-    flex-shrink: 0;
+    padding: 15px 15px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     position: relative;
     z-index: 1;
 }
@@ -211,58 +211,52 @@ canvas {
 .panel-header-inner {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
 }
 
-/* Colapsado: centraliza o botão toggle */
-#side-menu.collapsed .panel-header {
-    padding: 10px 0 8px;
+.panel-crest-circle {
+    width: 38px;
+    height: 38px;
+    background: #d4a34d;
+    border-radius: 50%;
     display: flex;
+    align-items: center;
     justify-content: center;
-}
-#side-menu.collapsed .panel-crest,
-#side-menu.collapsed .panel-title-block {
-    display: none;
-}
-
-.panel-crest {
-    width: 34px;
-    height: 34px;
     flex-shrink: 0;
-    background: radial-gradient(circle, var(--color-ornament-mid) 0%, var(--color-crest-bg-inner) 100%);
-    border: 1px solid var(--color-crest-border);
-    border-radius: 3px;
-    display: flex; align-items: center; justify-content: center;
+}
+
+.crest-icon {
+    color: #1a1306;
     font-size: 18px;
-    box-shadow: 0 0 12px var(--color-crest-glow);
-    transform: rotate(45deg);
-    animation: candleFlicker 3s ease-in-out infinite;
-}
-.panel-crest span { transform: rotate(-45deg); display: block; line-height: 1; }
-
-@keyframes candleFlicker {
-    0%, 100% { box-shadow: 0 0 12px var(--color-crest-glow); }
-    50%       { box-shadow: 0 0 22px var(--color-crest-glow-strong); }
 }
 
-.panel-title-block { flex: 1; min-width: 0; }
 .panel-title {
     font-family: 'Cinzel', serif;
-    font-size: var(--text-sm);
+    font-size: 14px;
     font-weight: 700;
-    letter-spacing: 0.12em;
-    color: var(--color-title);
-    text-transform: uppercase;
-    text-shadow: 0 0 16px var(--color-title-glow);
-    white-space: nowrap;
-}
-.panel-subtitle {
-    font-size: var(--text-xs);
-    color: var(--color-subtitle);
-    font-style: italic;
-    white-space: nowrap;
+    color: #f1e4d1;
 }
 
+.panel-subtitle {
+    color: #6e6557;
+    font-size: 11px;
+}
+/* ─── CONTROLES DE INTERFACE (VERSÃO CORRIGIDA) ─── */
+
+.panel-header-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    /* Adiciona distribuição de espaço para empurrar o botão para a direita */
+    justify-content: space-between; 
+}
+
+/* Garante que o bloco de texto (título/subtítulo) cresça para ocupar o centro */
+.panel-title-block {
+    flex: 1;
+}
+
+/* Estado normal (aberto) */
 .panel-toggle-btn {
     flex-shrink: 0;
     width: 32px;
@@ -272,117 +266,109 @@ canvas {
     color: var(--color-toggle-text);
     border-radius: 3px;
     cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
     font-size: var(--text-md);
     transition: all 0.3s;
 }
-.panel-toggle-btn:hover {
-    background: linear-gradient(135deg, var(--color-toggle-hover-start), var(--color-toggle-hover-end));
-    color: var(--color-toggle-hover-text);
-}
-#side-menu.collapsed .panel-toggle-btn {
-    transform: rotate(180deg);
+
+/* ESTADO FECHADO (COLLAPSED) */
+#side-menu.collapsed .panel-header {
+    padding: 10px 0;
+    display: flex;
+    justify-content: center; /* Centraliza apenas o botão de seta */
+    border-bottom: none;
 }
 
-/* ══ FERRAMENTAS DE RITUAIS ══
-   Visíveis nos dois estados (expandido e colapsado).
-   Expandido → grade 3 colunas com ícone + label
-   Colapsado → coluna única, só ícones
-*/
-.ritual-tools-section {
-    flex-shrink: 0;
-    padding: 6px 8px 8px;
-    position: relative;
-    z-index: 1;
-}
-
-.ritual-tools-label {
-    font-family: 'Cinzel', serif;
-    font-size: var(--text-xs);
-    letter-spacing: 0.15em;
-    color: var(--color-section-label);
-    text-transform: uppercase;
-    padding: 0 2px 6px;
-    white-space: nowrap;
-}
-/* Esconde o label no modo colapsado */
-#side-menu.collapsed .ritual-tools-label {
+/* ESCONDE O CÍRCULO DOURADO E TEXTOS NO MODO REDUZIDO */
+#side-menu.collapsed .panel-crest-circle,
+#side-menu.collapsed .panel-title-block,
+#side-menu.collapsed .ritual-tools-label,
+#side-menu.collapsed .tool-label,
+#side-menu.collapsed .panel-scroll,
+#side-menu.collapsed .panel-divider,
+#side-menu.collapsed .panel-bottom-ornament {
     display: none;
+}
+
+/* GARANTE QUE O BOTÃO DE SETA CONTINUE VISÍVEL E CENTRALIZADO */
+#side-menu.collapsed .panel-toggle-btn {
+    display: flex;
+    width: 32px;
+    height: 32px;
+}
+
+/* O botão de toggle agora permanece visível, mas ajustado */
+#side-menu.collapsed .panel-toggle-btn {
+    display: flex; 
+    width: 28px;
+    height: 28px;
+}
+
+/* Ferramentas em 1 coluna quando fechado */
+#side-menu.collapsed .ritual-tools-section {
+    padding: 10px 0;
+}
+
+#side-menu.collapsed .ritual-tools-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+#side-menu.collapsed .tool-btn {
+    width: 42px;
+    height: 42px;
+    margin: 0 auto;
+}
+
+/* CONFIGURAÇÃO DAS FERRAMENTAS (GRID) */
+.ritual-tools-section {
+    padding: 12px 15px;
+    flex-shrink: 0;
 }
 
 .ritual-tools-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 5px;
-}
-#side-menu.collapsed .ritual-tools-grid {
-    grid-template-columns: 1fr;
-    gap: 4px;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
 }
 
-/* Botão de ferramenta */
 .tool-btn {
+    width: 40px;      /* Define um tamanho fixo (ex: 40px ou 38px) */
+    height: 40px;     /* Mantém a mesma altura */
+    margin: 0 auto;   /* Centraliza o botão dentro da célula da grade */
+    background: #282118;
+    border: 1px solid #3d352a;
+    border-radius: 6px;
+    color: #8c8273;
+    cursor: pointer;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 8px 4px;
-    min-height: 52px;
-    background: linear-gradient(135deg, var(--color-btn-bg-start), var(--color-btn-bg-end));
-    border: 1px solid var(--color-btn-border);
-    border-radius: 4px;
-    color: var(--color-btn-label);
-    cursor: pointer;
-    transition: all 0.18s ease;
-    width: 100%;
-    box-sizing: border-box;
+    transition: all 0.2s;
+    padding: 0;
 }
+
 .tool-btn:hover {
-    background: linear-gradient(135deg, var(--color-btn-hover-start), var(--color-btn-hover-end));
-    border-color: var(--color-btn-hover-border);
-    color: var(--color-btn-label-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px var(--color-btn-hover-shadow);
+    background: #352c21;
+    color: #f1e4d1;
+    border-color: #5a4f3f;
 }
+
 .tool-btn.active {
-    background: linear-gradient(135deg, var(--color-btn-active-start), var(--color-btn-active-end));
-    border-color: var(--color-ornament-light);
-    color: var(--color-ornament-light);
-    box-shadow: 0 0 10px var(--color-crest-glow);
-}
-.tool-btn.danger-tool {
-    border-color: var(--color-danger-border);
-    color: var(--color-danger-label);
-}
-.tool-btn.danger-tool:hover {
-    background: linear-gradient(135deg, var(--color-danger-hover-start), var(--color-danger-hover-end));
-    border-color: var(--color-danger-hover-border);
-    color: var(--color-danger-label-hover);
+    background: #282118;
+    border: 2px solid #d4a34d;
+    color: #f1e4d1;
 }
 
 .tool-icon {
     font-size: 18px;
     line-height: 1;
-    display: block;
 }
-.tool-label {
-    font-family: 'Cinzel', serif;
-    font-size: 10px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    line-height: 1;
-    display: block;
-    white-space: nowrap;
-}
-/* No modo colapsado: botão menor e sem label */
-#side-menu.collapsed .tool-btn {
-    min-height: 40px;
-    padding: 8px 4px;
-    gap: 0;
-}
-#side-menu.collapsed .tool-label {
-    display: none;
+
+.tool-btn.danger-tool {
+    color: #a34d4d;
 }
 
 /* ══ DIVISOR ══ */
@@ -1340,4 +1326,470 @@ textarea.character-menu-input {
     background: rgba(0, 0, 0, 0.8);
     border: 1px solid var(--color-ornament-dark);
     color: #00ff00; /* Cor verde estilo terminal para ajudar a ler o JSON */
+}
+
+/* --- ESTILIZAÇÃO DAS ABAS --- */
+.panel-tabs {
+    display: flex;
+    justify-content: space-around;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 5px;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    color: #6e6557;
+    padding: 8px 5px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-btn:hover {
+    color: #f1e4d1;
+}
+
+.tab-btn.active {
+    color: #d4a34d;
+    border-bottom: 2px solid #d4a34d; /* Linha dourada da imagem */
+}
+
+.tab-icon {
+    font-size: 16px;
+}
+
+.tab-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* --- LOGICA DE EXIBIÇÃO --- */
+.tab-content {
+    display: none; /* Escondido por padrão */
+    flex-direction: column;
+}
+
+.tab-content.active {
+    display: flex; /* Mostra apenas a ativa */
+}
+
+/* Ajuste no scroll para não conflitar com as abas */
+.panel-scroll {
+    padding-top: 10px;
+}
+
+/* Ocultar abas no modo reduzido */
+#side-menu.collapsed .panel-tabs {
+    display: none;
+}
+
+.tab-icon i {
+    width: 16px;
+    height: 16px;
+    color: #6e6557; /* Cor apagada */
+    display: block;
+}
+
+.tab-btn.active .tab-icon i {
+    color: #d4a34d; /* Dourado */
+    filter: drop-shadow(0 0 5px rgba(212, 163, 77, 0.4));
+}
+
+/* Tamanho dos ícones dentro do SVG que o Lucide gera */
+.tab-icon svg {
+    width: 90%;
+    height: 90%;
+}
+
+.tool-icon i, 
+.tool-icon svg {
+    width: 18px;   /* Tamanho do ícone */
+    height: 18px;
+    stroke-width: 1.5px; /* Traço mais fino e elegante como na imagem */
+    display: block;
+}
+
+/* Cor padrão dos ícones (desativados) */
+.tool-btn .tool-icon {
+    color: #8c8273;
+}
+
+/* Cor do ícone quando o botão está ativo (Dourado) */
+.tool-btn.active .tool-icon {
+    color: #d4a34d;
+}
+
+/* Efeito específico para a lixeira (Danger) */
+.tool-btn.danger-tool .tool-icon {
+    color: #a34d4d;
+}
+
+/* Hover muda a cor do ícone para um bege claro */
+.tool-btn:hover .tool-icon {
+    color: #f1e4d1;
+}
+
+/* --- ESTILO DOS CARDS E ITENS (LISTAS) --- */
+.tab-content {
+    padding: 10px 5px;
+    gap: 8px;
+}
+
+/* Container de seção (Ex: PERSONAGENS, SPELLS) */
+.panel-section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: #6e6557;
+    letter-spacing: 0.1em;
+    margin: 10px 0 5px 5px;
+    text-transform: uppercase;
+}
+
+/* Card Genérico (usado para magias, personagens, monstros e páginas) */
+.entity-item, .spell-item, .scene-item, .tool-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: rgba(40, 33, 24, 0.5); /* Fundo marrom translúcido */
+    border: 1px solid #3d352a;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.entity-item:hover, .spell-item:hover, .scene-item:hover {
+    background: rgba(53, 44, 33, 0.8);
+    border-color: #5a4f3f;
+}
+
+/* Card Ativo/Atual (Ex: Página de cenário atual) */
+.scene-item.current {
+    border-color: #d4a34d;
+    background: rgba(212, 163, 77, 0.05);
+}
+
+/* --- AVATARES E ÍCONES REDONDOS --- */
+.entity-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
+    font-size: 14px;
+    color: white;
+    flex-shrink: 0;
+}
+
+/* Cores de avatar baseadas na imagem */
+.avatar-g { background: #6b4fd4; } /* Guerreiro - Roxo */
+.avatar-d { background: #a34d4d; } /* Dragão - Vermelho */
+.avatar-m { background: #4d73a3; } /* Mago - Azul */
+.avatar-c { background: #4da36b; } /* Clérigo - Verde */
+
+/* --- TEXTOS DENTRO DOS CARDS --- */
+.entity-info, .spell-info, .scene-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.entity-name, .spell-name, .scene-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1e4d1;
+}
+
+.entity-sub, .spell-sub, .tool-item-hint {
+    font-size: 11px;
+    color: #6e6557;
+}
+
+/* --- BOTÕES DE AÇÃO LATERAIS (Olho, Editar, Lixeira) --- */
+.entity-actions, .spell-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.entity-action-btn, .spell-action-btn {
+    width: 28px;
+    height: 28px;
+    background: #1a1306;
+    border: 1px solid #3d352a;
+    border-radius: 4px;
+    color: #6e6557;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.entity-action-btn:hover, .spell-action-btn:hover {
+    color: #f1e4d1;
+    border-color: #5a4f3f;
+}
+
+/* Ícone de olho/visibilidade ativo */
+.entity-action-btn svg, .spell-action-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* --- BOTÃO GRANDE (Iniciar Combate / Nova Página) --- */
+.combat-start-btn, .new-scene-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: #282118;
+    border: 1px solid #d4a34d; /* Borda dourada */
+    border-radius: 8px;
+    color: #f1e4d1;
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: 5px;
+    transition: all 0.2s;
+}
+
+.combat-start-btn:hover {
+    background: #d4a34d;
+    color: #1a1306;
+}
+
+/* Barra de Vida (HP) simples abaixo do nome */
+.cc-hp-bar-wrap {
+    height: 3px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 2px;
+    margin-top: 4px;
+    width: 100%;
+}
+
+.cc-hp-bar {
+    height: 100%;
+    border-radius: 2px;
+}
+.cc-hp-bar.green { background: #4da36b; }
+.cc-hp-bar.yellow { background: #d4a34d; }
+.cc-hp-bar.red { background: #a34d4d; }
+/* ══════════════════════════════════════════
+   BARRA DE FERRAMENTAS — CENTRAL INFERIOR
+   Segue o design system do painel lateral
+══════════════════════════════════════════ */
+
+#tool-bar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4000;
+
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+
+    /* Mesmo gradiente do .panel-body */
+    background: linear-gradient(180deg,
+        var(--color-panel-bg-top)    0%,
+        var(--color-panel-bg-mid)    60%,
+        var(--color-panel-bg-bottom) 100%);
+
+    border: 1px solid var(--color-panel-border);
+    border-radius: 6px;
+
+    box-shadow:
+        inset -1px 0 0 var(--color-panel-shadow-inner),
+        0 8px 32px var(--color-shadow-strong),
+        0 0 16px var(--color-shadow-accent-soft);
+
+    /* Textura de linhas finas — igual ao painel */
+    overflow: hidden;
+}
+
+#tool-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+        0deg, transparent, transparent 3px,
+        var(--color-overlay-stripe) 3px, var(--color-overlay-stripe) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ── Ornamentos topo / base (idênticos ao painel) ── */
+.toolbar-ornament-top,
+.toolbar-ornament-bottom {
+    height: 5px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--color-ornament-dark)  10%,
+        var(--color-ornament-mid)   30%,
+        var(--color-ornament-light) 50%,
+        var(--color-ornament-mid)   70%,
+        var(--color-ornament-dark)  90%,
+        transparent 100%
+    );
+}
+
+.toolbar-ornament-top::after {
+    content: '✦';
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--color-ornament-glow);
+    font-size: 9px;
+    text-shadow: 0 0 8px var(--color-ornament-glow);
+}
+
+/* ── Linha interna com os botões ── */
+.toolbar-inner {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 14px;
+    position: relative;
+    z-index: 1;
+}
+
+/* ── Grupos de botões ── */
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ── Separador com losango — igual ao .panel-divider mas vertical ── */
+.toolbar-divider {
+    color: var(--color-ornament-mid);
+    font-size: 8px;
+    line-height: 1;
+    opacity: 0.6;
+    padding: 0 4px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+/* ── Os botões herdam exatamente o .tool-btn do painel ── */
+/* (O CSS do .tool-btn já está no style.css principal — não precisamos redefinir)  */
+/* Apenas garantimos o tamanho correto aqui: */
+#tool-bar .tool-btn {
+    width: 38px;
+    height: 38px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+/* Tooltip acima dos botões */
+#tool-bar .tool-btn {
+    position: relative;
+}
+
+#tool-bar .tool-btn::after {
+    content: attr(title);
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+
+    background: linear-gradient(180deg,
+        var(--color-panel-bg-top) 0%,
+        var(--color-panel-bg-bottom) 100%);
+    border: 1px solid var(--color-panel-border);
+    color: var(--color-btn-label-hover);
+
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: 4px 8px;
+    border-radius: 3px;
+
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 9999;
+}
+
+#tool-bar .tool-btn:hover::after {
+    opacity: 1;
+}
+
+.layers-container {
+    max-height: 250px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-right: 5px;
+}
+
+.layer-item {
+    padding: 6px 10px; /* Menor que o card normal */
+}
+
+.layer-item .entity-name {
+    font-size: 13px;
+}
+/* Container que segura as listas */
+.layers-container {
+    max-height: 180px; /* Altura aproximada para mostrar 4 itens e meio */
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Estilização da Barra de Rolagem (Scrollbar) */
+.layers-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+/* Fundo da trilha do scroll */
+.layers-container::-webkit-scrollbar-track {
+    background: rgba(26, 19, 6, 0.5); /* Cor bem escura */
+    border-radius: 10px;
+}
+
+/* O "pegador" do scroll */
+.layers-container::-webkit-scrollbar-thumb {
+    background: #3d352a; /* Tom marrom da borda */
+    border: 1px solid #6e6557;
+    border-radius: 10px;
+}
+
+/* Quando passa o mouse no scroll */
+.layers-container::-webkit-scrollbar-thumb:hover {
+    background: #d4a34d; /* Dourado ao interagir */
+}
+
+/* Firefox Support */
+.layers-container {
+    scrollbar-width: thin;
+    scrollbar-color: #3d352a rgba(26, 19, 6, 0.5);
 }

@@ -14,7 +14,9 @@
             <!-- HEADER: visível sempre, mesmo colapsado -->
             <div class="panel-header">
                 <div class="panel-header-inner">
-                    <div class="panel-crest"><span>⚜</span></div>
+                    <div class="panel-crest-circle">
+                        <span class="crest-icon">⚜</span>
+                    </div>
                     <div class="panel-title-block">
                         <div class="panel-title">Painel do Mestre</div>
                         <div class="panel-subtitle">Controles da Sessão</div>
@@ -23,103 +25,112 @@
                 </div>
             </div>
 
-            <!-- FERRAMENTAS DE RITUAIS: aparecem no modo colapsado também -->
-            <div class="ritual-tools-section">
-                <div class="ritual-tools-grid">
-                    <button class="tool-btn active" id="btn-tool-select" onclick="setTool('select')">
-                        <span class="tool-icon">👆</span>
-                        <span class="tool-label">Seleção</span>
-                    </button>
-                    <button class="tool-btn" onclick="setTool('brush')" id="tool-brush" title="Pincel Livre — desenhe uma área fechada no mapa">
-                        <span class="tool-icon">🖌️</span>
-                        <span class="tool-label full-only">Pincel</span>
-                    </button>
-                    <button class="tool-btn" onclick="setTool('square')" id="tool-square" title="Área Quadrada — clique e arraste para criar">
-                        <span class="tool-icon">⬛</span>
-                        <span class="tool-label full-only">Quadrado</span>
-                    </button>
-                    <button class="tool-btn" onclick="setTool('circle')" id="tool-circle" title="Área Circular — clique e arraste para criar">
-                        <span class="tool-icon">⭕</span>
-                        <span class="tool-label full-only">Círculo</span>
-                    </button>
-                    <button class="tool-btn" onclick="setTool('triangle')" id="tool-triangle" title="Área Triangular — clique e arraste para criar">
-                        <span class="tool-icon">🔺</span>
-                        <span class="tool-label full-only">Triângulo</span>
-                    </button>
-                    <button class="tool-btn" onclick="setTool('spell_object')" id="tool-spell_object" title="Magia Individual — clique no mapa para posicionar">
-                        <span class="tool-icon">✨</span>
-                        <span class="tool-label full-only">Magia</span>
-                    </button>
-                    <button class="tool-btn" id="btn-tool-text" onclick="setTool('text')">
-                        <span class="tool-icon">🔤</span>
-                        <span class="tool-label">Texto</span>
-                    </button>
-                    <button class="tool-btn danger-tool" onclick="clearArea()" title="Limpar Tudo — remove todos os efeitos e zonas">
-                        <span class="tool-icon">🗑️</span>
-                        <span class="tool-label full-only">Limpar</span>
-                    </button>
-                    <button class="tool-btn grid-toggle-btn active" id="btn-tool-grid" onclick="toggleGrid()" title="Ativar/desativar grade de referência">
-                        <span class="tool-icon">#</span>
-                        <span class="tool-label full-only">Grid</span>
-                    </button>
-                </div>
+            <div class="panel-tabs">
+                <button class="tab-btn active" onclick="switchTab('cena')">
+                    <span class="tab-icon"><i data-lucide="copy"></i></span>
+                    <span class="tab-label">Cena</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('entidades')">
+                    <span class="tab-icon"><i data-lucide="users"></i></span>
+                    <span class="tab-label">Entidades</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('sessao')">
+                    <span class="tab-icon"><i data-lucide="wand-sparkles"></i></span>
+                    <span class="tab-label">Sessão</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('campanha')">
+                    <span class="tab-icon"><i data-lucide="book-open"></i></span>
+                    <span class="tab-label">Campanha</span>
+                </button>
             </div>
 
-            <div class="panel-divider full-only"></div>
+            <div class="panel-scroll">
+                <div id="tab-cena" class="tab-content active">
+                    <div class="panel-section-label">Efeitos individuais e magias</div>
+                    <div id="spells-list" class="layers-container"></div>
 
-            <!-- CONTEÚDO EXPANDIDO: só aparece quando o menu está aberto -->
-            <div class="panel-scroll full-only">
+                    <div class="panel-divider"></div>
 
-                <div class="panel-section-label full-only">👾 Bestiário</div>
-                    <div class="panel-select-group full-only">
+                    <div class="panel-section-label">Rituais de campo</div>
+                    <div id="layers-list" class="layers-container"></div>
+                </div>
+
+                <div id="tab-entidades" class="tab-content">
+                    <div class="panel-section-label">Ordem de Combate</div>
+                    <div id="initiative-container" class="side-status-card">
+                        <div id="initiative-list">
+                            </div>
+                        <div class="initiative-controls">
+                            <button class="combat-btn" onclick="sortInitiative()">⚡ Ordenar</button>
+                            <button class="combat-btn" onclick="resetCombat()">↺ Reset</button>
+                            <button class="combat-btn" onclick="prevTurn()">◀ Voltar</button>
+                            <button class="combat-btn primary" onclick="nextTurn()">▶ Próximo</button>
+                        </div>
+                    </div>
+
+                    <div class="panel-section-label">Bestiário</div>
+                    <div class="panel-select-group">
                         <div class="panel-select-wrap">
                             <select id="monster-select" class="panel-select">
-                                <option value="">— Carregando Bestiário... —</option>
+                                <option value="">— Carregando monstros... —</option>
                             </select>
                         </div>
-                        <button class="view-btn primary accent" style="width: 100%; margin-top: 8px;" onclick="addMonsterFromSelect()">
-                            ➕ Invocar no Centro
+                        <button class="combat-start-btn" style="margin-top: 8px;" onclick="addMonsterFromSelect()">
+                            <i data-lucide="plus"></i> Invocar no Centro
                         </button>
                     </div>
-                <div class="panel-divider full-only"></div>
+                    
+                    <div class="panel-divider"></div>
 
-                <div class="panel-select-group full-only">
-                    <div class="panel-section-label full-only">🛡️ Jogadores</div>
-                    <div class="panel-select-group full-only">
-                        <button class="view-btn accent" style="width: 100%;" onclick="openImportModal()">
-                            📥 Importar Personagens
-                        </button>
-                        <p class="panel-subtitle" style="font-size: 10px; margin-top: 5px; text-align: center;">
-                            Upload de arquivo .json ou colar código.
-                        </p>
+                    <button class="new-scene-btn" style="border-style: dashed; border-color: #3d352a;" onclick="openImportModal()">
+                        <i data-lucide="download"></i> Importar Personagens
+                    </button>
+                </div>
+
+                <div id="tab-sessao" class="tab-content">
+                    <div class="panel-section-label">Personagem Selecionado</div>
+                    <div class="entity-item" style="cursor: default; background: rgba(212, 163, 77, 0.05); border-color: #d4a34d66;">
+                        <div class="entity-avatar" id="side-char-avatar" style="background: #d4a34d;">?</div>
+                        <div class="entity-info">
+                            <span class="entity-name" id="side-character-name">Nenhum selecionado</span>
+                            <div id="side-character-statuses" class="side-char-statuses">
+                                </div>
+                        </div>
                     </div>
+                    
+                    <div class="panel-section-label">Notas da Sessão</div>
+                    <textarea class="character-menu-input full-width" style="height: 150px; resize: none; border-radius: 8px; background: rgba(0,0,0,0.2);" placeholder="Anotações do mestre..."></textarea>
+                    
+                    <button class="combat-start-btn" style="margin-top: 10px; border-color: #6e6557; color: #6e6557;">
+                        <i data-lucide="save"></i> Salvar Log da Sessão
+                    </button>
                 </div>
-                <div class="panel-divider"></div>
 
-                <!-- SEÇÃO: COMBATE -->
-                <div class="panel-section-label">⚔️ Ordem de Combate</div>
-                <div id="initiative-container" class="side-status-card">
-                    <div id="initiative-list"></div>
-                    <div class="initiative-controls">
-                        <button class="combat-btn" onclick="sortInitiative()" title="Ordenar por iniciativa">⚡ Ordenar</button>
-                        <button class="combat-btn" onclick="resetCombat()" title="Resetar combate">↺ Reset</button>
-                        <button class="combat-btn" onclick="prevTurn()" title="Turno anterior">◀ Voltar</button>
-                        <button class="combat-btn primary" onclick="nextTurn()" title="Próximo turno">▶ Próximo</button>
+                <div id="tab-campanha" class="tab-content">
+                    <div class="panel-section-label">Páginas de Cenário</div>
+                    
+                    <div class="scene-item current">
+                        <div class="entity-avatar" style="background: #3d352a;"><i data-lucide="map-pin" style="width:14px;"></i></div>
+                        <div class="scene-info">
+                            <span class="scene-name">Taverna do Dragão</span>
+                            <span class="entity-sub">Mapa Atual</span>
+                        </div>
+                        <i data-lucide="check-circle-2" style="color: #d4a34d; width:16px;"></i>
                     </div>
+
+                    <div class="scene-item">
+                        <div class="entity-avatar" style="background: #1a1306;"><i data-lucide="ghost" style="width:14px;"></i></div>
+                        <div class="scene-info">
+                            <span class="scene-name">Masmorra Sombria</span>
+                            <span class="entity-sub">Página 2</span>
+                        </div>
+                    </div>
+
+                    <button class="combat-start-btn" style="width:100%; margin-top:10px;">
+                        <i data-lucide="plus-circle"></i> Nova Página
+                    </button>
                 </div>
-
-                <div class="panel-divider"></div>
-
-                <!-- SEÇÃO: PERSONAGEM SELECIONADO -->
-                <div class="panel-section-label">🧙 Personagem Selecionado</div>
-                <div class="side-character-card">
-                    <div class="side-char-name" id="side-character-name">Nenhum selecionado</div>
-                    <div class="side-char-statuses" id="side-character-statuses"></div>
-                </div>
-
             </div>
-
-            <div class="panel-bottom-ornament full-only"></div>
         </div>
     </div>
 
@@ -299,7 +310,87 @@
             </div>
         </div>
     </div>
+
+    <div id="tool-bar">
+        <div class="toolbar-inner">
+
+            <div class="toolbar-group">
+                <button class="tool-btn active" id="btn-tool-select" onclick="setTool('select')" title="Seleção">
+                    <span class="tool-icon"><i data-lucide="mouse-pointer-2"></i></span>
+                </button>
+                <button class="tool-btn" id="btn-tool-pen" onclick="setTool('select')" title="Caneta">
+                    <span class="tool-icon"><i data-lucide="pen-tool"></i></span>
+                </button>
+            </div>
+
+            <div class="toolbar-divider">⬥</div>
+
+            <div class="toolbar-group">
+                <button class="tool-btn" id="tool-brush" onclick="setTool('brush')" title="Pincel">
+                    <span class="tool-icon"><i data-lucide="brush"></i></span>
+                </button>
+                <button class="tool-btn" id="tool-square" onclick="setTool('square')" title="Quadrado">
+                    <span class="tool-icon"><i data-lucide="square"></i></span>
+                </button>
+                <button class="tool-btn" id="tool-circle" onclick="setTool('circle')" title="Círculo">
+                    <span class="tool-icon"><i data-lucide="circle"></i></span>
+                </button>
+                <button class="tool-btn" id="tool-triangle" onclick="setTool('triangle')" title="Triângulo">
+                    <span class="tool-icon"><i data-lucide="triangle"></i></span>
+                </button>
+                <button class="tool-btn" id="btn-tool-text" onclick="setTool('text')" title="Texto">
+                    <span class="tool-icon"><i data-lucide="type"></i></span>
+                </button>
+            </div>
+
+            <div class="toolbar-divider">⬥</div>
+
+            <!-- Grupo: Magia e Texto -->
+            <div class="toolbar-group">
+                <button class="tool-btn" id="tool-spell_object" onclick="setTool('spell_object')" title="Magia Individual">
+                    <span class="tool-icon"><i data-lucide="sparkle"></i></span>
+                </button>
+            </div>
+
+            <div class="toolbar-divider">⬥</div>
+
+            <!-- Grupo: Visualização -->
+            <div class="toolbar-group">
+                <button class="tool-btn grid-toggle-btn" id="btn-tool-grid" onclick="toggleGrid()" title="Grade">
+                    <span class="tool-icon"><i data-lucide="hash"></i></span>
+                </button>
+            </div>
+
+            <div class="toolbar-divider">⬥</div>
+
+            <!-- Grupo: Ações -->
+            <div class="toolbar-group">
+                <button class="tool-btn danger-tool" onclick="clearArea()" title="Limpar Tudo">
+                    <span class="tool-icon"><i data-lucide="trash-2"></i></span>
+                </button>
+            </div>
+
+        </div>
+    </div>
     <canvas id="vttCanvas"></canvas>
     <script type="module" src="src/main.ts"></script>
+    <script>
+        function switchTab(tabId) {
+            // 1. Remove a classe 'active' de todos os botões e conteúdos
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // 2. Adiciona 'active' ao botão clicado (via index ou ID se você preferir ajustar)
+            // No exemplo acima, usamos o onclick com o ID da aba:
+            const selectedContent = document.getElementById('tab-' + tabId);
+            if (selectedContent) {
+                selectedContent.classList.add('active');
+            }
+
+            // Para o botão, precisamos identificar qual botão foi clicado. 
+            // Uma forma simples é adicionar active ao event.currentTarget:
+            event.currentTarget.classList.add('active');
+        }
+    </script>
 </body>
 </html>

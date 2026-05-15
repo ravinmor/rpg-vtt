@@ -37,19 +37,27 @@ function spawnTextInput(clientX: number, clientY: number, mapX: number, mapY: nu
     setTimeout(() => input.focus(), 10);
 
     let finished = false
+    
     function finishEditing() {
         if (finished) return
         finished = true
+        
+        const maxLength = 18;
         const text = input.value.trim()
         if (text) {
             state.activeZones.push({
                 type: 'text', text, x: mapX, y: mapY,
+                name: text.length > maxLength ? text.substring(0, maxLength) + "..." : text,
+                category: 'Texto',
                 fontSize: 24, rotation: 0,
                 color: titleColor, fontFamily: titleFont,
             })
         }
+
         input.remove()
-        if (typeof (window as any).setTool === 'function') (window as any).setTool('select')
+        if (typeof (window as any).renderLayersList === 'function') {
+            (window as any).renderLayersList();
+        }
     }
 
     input.addEventListener('blur', finishEditing)
@@ -99,6 +107,7 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
 
     // ── MOUSEDOWN ────────────────────────────────────────────────────────────
     window.addEventListener('mousedown', (e: MouseEvent) => {
+        if ((e.target as HTMLElement).tagName !== 'CANVAS') return;
         if ((e.target as HTMLElement)?.id === 'canvas-text-input') return;
 
         if (state.sideMenu?.contains(e.target)     ||
@@ -112,58 +121,68 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
 
         if (state.currentDrawMode === 'select') {
 
-            // ── 0. Gizmo ─────────────────────────────────────────────────────
-            if (gizmo.hitsHandle(mx, my)) return
+            // 1. Gizmo (Handles de redimensionamento/rotação)
+            if (gizmo.hitsHandle(mx, my)) return;
 
-            // ── 1. Token ─────────────────────────────────────────────────────
-            const clickedCharacter = tools.getCharacterAtPosition(mx, my)
+            // 2. Tokens (Personagens)
+            const clickedCharacter = tools.getCharacterAtPosition(mx, my);
             if (clickedCharacter) {
-                state.selectedCharacter = clickedCharacter
-                tools.updateCharacterPanels()
-                state.isDraggingToken   = true
-                state.tokenDragStart    = coords
-                state.tokenHasMoved     = false
-                tools.closeCharacterMenu()
-                gizmo.detach()
-                return
+                state.selectedCharacter = clickedCharacter;
+                tools.updateCharacterPanels();
+                state.isDraggingToken   = true;
+                state.tokenDragStart    = coords;
+                state.tokenHasMoved     = false;
+                tools.closeCharacterMenu();
+                gizmo.detach();
+                return;
             }
 
-            // ── 2. Zona / Efeito ─────────────────────────────────────────────
-            // Prioridade: spell_object sempre vence sobre áreas (brush/shapes/texto),
-            // independente de qual foi criado depois.
-            // Dentro de cada grupo, o mais recente (fim do array) tem prioridade.
-            let hitZone = false
+            // 3. Zonas / Efeitos (SISTEMA DE CAMADAS)
+            let hitZone = false;
 
-            // 1º: testa só spells
+            // PRIORIDADE 1: Testa Spells (O mais recente/em cima primeiro)
             for (let i = state.activeZones.length - 1; i >= 0; i--) {
-                const zone = state.activeZones[i]
-                if (zone.type !== 'spell_object') continue
+                const zone = state.activeZones[i];
+                
+                // REGRAS DE CAMADA: Ignora se invisível ou travado
+                if (zone.type !== 'spell_object' || zone.visible === false || zone.locked) continue;
+
                 if (hitTestZone(zone, mx, my)) {
-                    selectZone(zone, mx, my, state)
-                    hitZone = true
-                    break
+                    selectZone(zone, mx, my, state);
+                    hitZone = true;
+                    break;
                 }
             }
 
-            // 2º: testa áreas — só executa se nenhum spell foi clicado
+            // PRIORIDADE 2: Testa Áreas/Texto (Se nenhum spell foi clicado)
             if (!hitZone) {
                 for (let i = state.activeZones.length - 1; i >= 0; i--) {
-                    const zone = state.activeZones[i]
-                    if (zone.type === 'spell_object') continue
+                    const zone = state.activeZones[i];
+                    
+                    // REGRAS DE CAMADA: Ignora se invisível, travado ou se for spell
+                    if (zone.type === 'spell_object' || zone.visible === false || zone.locked) continue;
+
                     if (hitTestZone(zone, mx, my)) {
-                        selectZone(zone, mx, my, state)
-                        hitZone = true
-                        break
+                        selectZone(zone, mx, my, state);
+                        hitZone = true;
+                        break;
                     }
                 }
             }
 
+            // Se clicou no vazio, limpa seleções e atualiza a lista de camadas
             if (!hitZone) {
-                state.selectedCharacter = null
-                state.editingZone       = null
-                gizmo.detach()
+                state.selectedCharacter = null;
+                state.editingZone       = null;
+                gizmo.detach();
             }
-            return
+
+            // Atualiza a UI do painel lateral para mostrar qual camada está selecionada
+            if (typeof (window as any).renderLayersList === 'function') {
+                (window as any).renderLayersList();
+            }
+            
+            return;
         }
 
         // ── MODOS DE DESENHO ─────────────────────────────────────────────────

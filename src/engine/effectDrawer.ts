@@ -146,6 +146,12 @@ function applyTexture(sprite: PIXI.Sprite, tex: PIXI.Texture) {
 function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
     const { container, maskGfx } = entry
 
+    // NOVO: Respeita a propriedade visible
+    container.visible = zone.visible !== false;
+    maskGfx.visible = zone.visible !== false;
+
+    if (!container.visible) return;
+    
     const sprite   = container.getChildByLabel('content')  as PIXI.Sprite  | null
     const fallback = container.getChildByLabel('fallback') as PIXI.Graphics
     const border   = container.getChildByLabel('border')   as PIXI.Graphics

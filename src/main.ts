@@ -12,7 +12,8 @@ import * as BestiaryUI from './ui/bestiaryUI';
 import { loadFromLocalStorage } from './state/gameState';
 import { initScene, app, viewport } from './engine/scene';
 import { gizmo } from './engine/transformGizmo';
-import { loadStatusIcons } from './utils/images'
+import { loadStatusIcons } from './utils/images';
+import { createIcons, Map, Users, BookOpen, MousePointer2, Square, Circle, Triangle, Type, Grid3X3, Trash2, Sparkle, Brush, Hash, Copy, WandSparkles, Eye, EyeOff, Lock, Unlock, ChevronLeft, X, PenTool } from 'lucide';
 
 // ======================================================
 // CANVAS E CONTEXTO
@@ -366,9 +367,31 @@ characterMenuShell.addEventListener('mousedown', startCharacterMenuDrag as Event
 // ======================================================
 // CONTROLES DE CENA
 // ======================================================
-function toggleSideMenu() {
-    sideMenu.classList.toggle('collapsed');
-}
+const updateIcons = () => {
+    createIcons({
+        icons: {
+            Users,
+            Copy,
+            Sparkle,
+            BookOpen,
+            WandSparkles,
+            MousePointer2,
+            Brush,
+            Hash,
+            Square,
+            Circle,
+            Triangle,
+            Type,
+            Grid3X3,
+            Trash2,
+            Eye,
+            EyeOff,
+            Lock,
+            Unlock,
+            PenTool
+        }
+    });
+};
 
 function toggleGrid() {
     state.showGrid = !state.showGrid;
@@ -577,6 +600,62 @@ function saveCharacterEdit() {
     CombatLogic.saveToLocalStorage(characters);
 }
 
+function renderLayersList() {
+    const layersContainer = document.getElementById('layers-list'); // Container de Efeitos/Camadas
+    const spellsContainer = document.getElementById('spells-list'); // VOCÊ PRECISA CRIAR ESTE ID NO HTML
+    
+    if (!layersContainer) return;
+
+    // Limpa os dois
+    layersContainer.innerHTML = '';
+    if (spellsContainer) spellsContainer.innerHTML = '';
+
+    // Inverte para manter a ordem visual (quem está no topo do array fica no topo da lista)
+    const reversedZones = [...state.activeZones].reverse();
+
+    reversedZones.forEach((zone) => {
+        // Fallbacks de segurança
+        if (zone.visible === undefined) zone.visible = true;
+        if (zone.locked === undefined) zone.locked = false;
+        if (!zone.name) zone.name = zone.type === 'spell_object' ? "Magia" : "Área";
+
+        // Cria o HTML do item
+        const itemHTML = `
+            <div class="entity-item layer-item ${state.editingZone?.id === zone.id ? 'current' : ''}">
+                <div class="entity-info" onclick="selectLayer('${zone.id}')">
+                    <span class="entity-name">${zone.name}</span>
+                    <span class="entity-sub">${zone.category}</span>
+                </div>
+                <div class="entity-actions">
+                    <button class="entity-action-btn" onclick="toggleLayerVisibility('${zone.id}', event)">
+                        <i data-lucide="${zone.visible !== false ? 'eye' : 'eye-off'}"></i>
+                    </button>
+                    <button class="entity-action-btn" onclick="toggleLayerLock('${zone.id}', event)">
+                        <i data-lucide="${zone.locked ? 'lock' : 'unlock'}"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // DISTRIBUIÇÃO: Se for magia, vai para um lado. Se for efeito de área/desenho, vai para o outro.
+        if (zone.type === 'spell_object') {
+            if (spellsContainer) {
+                spellsContainer.insertAdjacentHTML('beforeend', itemHTML);
+            } else {
+                // Se o spells-list não existir, joga tudo no layers-list para não sumir
+                layersContainer.insertAdjacentHTML('beforeend', itemHTML);
+            }
+        } else {
+            layersContainer.insertAdjacentHTML('beforeend', itemHTML);
+        }
+    });
+
+    // Atualiza os ícones do Lucide
+    if (w.updateIcons) {
+        w.updateIcons();
+    }
+}
+
 // ======================================================
 // INICIALIZAÇÃO DA UI E LOOP
 // ======================================================
@@ -618,6 +697,9 @@ w.processImportedJson     = processImportedJson;
 w.openEditCharacterModal  = openEditCharacterModal;
 w.closeEditCharacterModal = closeEditCharacterModal;
 w.saveCharacterEdit       = saveCharacterEdit;
+w.renderLayersList        = renderLayersList;
+w.createIcons             = createIcons;
+w.updateIcons             = updateIcons
 w.applyCharacterHp = (direction: number) => {
     if (!state.selectedCharacter) return;
     const amount = Math.max(0, Number(characterHpInput.value) || 0);
@@ -646,11 +728,28 @@ w.spawn = (id: string) => {
     const center = viewport.center;
     CombatLogic.spawnMonster(id, center.x, center.y, renderInitiativeList);
 };
+w.selectLayer = (id: string) => {
+    const zone = state.activeZones.find(z => z.id === id);
+    if (zone) state.editingZone = zone;
+    renderLayersList();
+};
+w.toggleLayerVisibility = (id: string, e: MouseEvent) => {
+    e.stopPropagation();
+    const zone = state.activeZones.find(z => z.id === id);
+    if (zone) zone.visible = !zone.visible;
+    renderLayersList();
+};
+w.toggleLayerLock = (id: string, e: MouseEvent) => {
+    e.stopPropagation();
+    const zone = state.activeZones.find(z => z.id === id);
+    if (zone) zone.locked = !zone.locked;
+    renderLayersList();
+};
 
 async function bootstrap() {
     await initScene(canvas);
     await loadStatusIcons()
-    
+
     window.addEventListener('pointerdown', () => {
         console.log("Interação detectada, vídeos destravados.");
     }, { once: true });
@@ -695,10 +794,11 @@ async function bootstrap() {
         syncUI(state)
         gizmo.tick()
     })
-
+    syncEffects(state.activeZones, state.editingZone);
     renderInitiativeList();
 }
 
+updateIcons();
 bootstrap();
 renderSideCharacterStatuses(null);
 renderInitiativeList();
