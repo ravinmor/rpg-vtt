@@ -1,22 +1,30 @@
 // src/engine/effectDrawer.ts
 import * as PIXI from 'pixi.js'
-import { layerEffects } from './scene'
+import { subLayerAreas, subLayerSpells } from './scene'
 
 interface ZoneEntry {
     container: PIXI.Container
     maskGfx:   PIXI.Graphics
+    layer:     PIXI.Container
 }
 
 const zoneMap    = new Map<string, ZoneEntry>()
 const assetCache = new Map<string, PIXI.Texture>()
 
+function layerFor(zone: any): PIXI.Container {
+    return zone.type === 'spell_object' ? subLayerSpells : subLayerAreas
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SYNC
+// ─────────────────────────────────────────────────────────────────────────────
 export function syncEffects(activeZones: any[], editingZone: any) {
     const activeIds = new Set(activeZones.map((z: any) => z.id))
 
     for (const [id, entry] of zoneMap) {
         if (!activeIds.has(id)) {
-            layerEffects.removeChild(entry.container)
-            layerEffects.removeChild(entry.maskGfx)
+            entry.layer.removeChild(entry.container)
+            entry.layer.removeChild(entry.maskGfx)
             entry.container.destroy({ children: true })
             entry.maskGfx.destroy()
             zoneMap.delete(id)
@@ -31,8 +39,8 @@ export function syncEffects(activeZones: any[], editingZone: any) {
         const newAssetUrl = zone.videoPath || zone.imagePath || null
         if (entry && (entry.container as any).__assetUrl !== newAssetUrl) {
             if (zone.type !== 'text') {
-                layerEffects.removeChild(entry.container)
-                layerEffects.removeChild(entry.maskGfx)
+                entry.layer.removeChild(entry.container)
+                entry.layer.removeChild(entry.maskGfx)
                 entry.container.destroy({ children: true })
                 entry.maskGfx.destroy()
                 zoneMap.delete(zone.id)
@@ -50,28 +58,31 @@ export function syncEffects(activeZones: any[], editingZone: any) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CRIAÇÃO
+// CRIAÇÃO — addChildAt garante ordem de inserção sem reordenação posterior
 // ─────────────────────────────────────────────────────────────────────────────
 function createZoneEntry(zone: any): ZoneEntry {
+    const layer = layerFor(zone)
+
+    // Conta quantas zonas desta layer já existem no mapa.
+    // Cada zona ocupa 2 slots na display list (maskGfx + container).
+    // Inserir no final significa índice = childCount atual da layer.
+    // Como addChild já faz isso, usamos addChild diretamente —
+    // mas PRECISAMOS que mask venha ANTES do container para o Pixi funcionar.
     const maskGfx = new PIXI.Graphics()
     maskGfx.label = `mask_${zone.id}`
-    layerEffects.addChild(maskGfx)
+    layer.addChild(maskGfx)          // slot N   (mask)
 
     const container = new PIXI.Container()
     container.label = zone.id
     container.mask  = maskGfx
-    layerEffects.addChild(container)
+    layer.addChild(container)        // slot N+1 (conteúdo)
 
     if (zone.type === 'text') {
         container.mask = null
-        const fallback = new PIXI.Graphics()
-        fallback.label = 'fallback'
-        container.addChild(fallback)
-        const border = new PIXI.Graphics()
-        border.label = 'border'
-        container.addChild(border)
+        container.addChild(Object.assign(new PIXI.Graphics(), { label: 'fallback' }))
+        container.addChild(Object.assign(new PIXI.Graphics(), { label: 'border' }))
         ;(container as any).__assetUrl = null
-        return { container, maskGfx }
+        return { container, maskGfx, layer }
     }
 
     const assetUrl: string | null = zone.videoPath || zone.imagePath || null
@@ -79,11 +90,10 @@ function createZoneEntry(zone: any): ZoneEntry {
 
     if (assetUrl) {
         const sprite = new PIXI.Sprite(PIXI.Texture.EMPTY)
-        sprite.label  = 'content'
+        sprite.label   = 'content'
         sprite.anchor.set(0.5)
         sprite.visible = false
         container.addChild(sprite)
-
         loadAsset(assetUrl, sprite)
     }
 
@@ -95,41 +105,37 @@ function createZoneEntry(zone: any): ZoneEntry {
     border.label = 'border'
     container.addChild(border)
 
-    return { container, maskGfx }
+    return { container, maskGfx, layer }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ASSET LOADING
+// ─────────────────────────────────────────────────────────────────────────────
 function loadAsset(url: string, sprite: PIXI.Sprite) {
     if (assetCache.has(url)) {
-        applyTexture(sprite, assetCache.get(url)!, url)
+        applyTexture(sprite, assetCache.get(url)!)
         return
     }
     PIXI.Assets.load(url)
         .then((tex: PIXI.Texture) => {
             assetCache.set(url, tex)
-            applyTexture(sprite, tex, url)
+            applyTexture(sprite, tex)
         })
         .catch(() => console.warn('[effectDrawer] Falha ao carregar:', url))
 }
 
-function applyTexture(sprite: PIXI.Sprite, tex: PIXI.Texture, url: string) {
+function applyTexture(sprite: PIXI.Sprite, tex: PIXI.Texture) {
     sprite.texture = tex
     sprite.visible = true
-
     const src   = tex.source as any
     const video = src?.resource instanceof HTMLVideoElement
-        ? src.resource as HTMLVideoElement
-        : null
-
+        ? src.resource as HTMLVideoElement : null
     if (video) {
         video.muted = true
         video.loop  = true
         video.play().catch(() => {})
-
-        // Vídeos de magia têm fundo preto — 'screen' faz o preto desaparecer,
-        // mantendo apenas as cores claras do efeito (chamas, névoa, etc.)
         sprite.blendMode = 'screen'
     } else {
-        // Texturas de imagem (pedra, grama, madeira) usam blend normal
         sprite.blendMode = 'normal'
     }
 }
@@ -140,7 +146,7 @@ function applyTexture(sprite: PIXI.Sprite, tex: PIXI.Texture, url: string) {
 function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
     const { container, maskGfx } = entry
 
-    const sprite   = container.getChildByLabel('content')  as PIXI.Sprite   | null
+    const sprite   = container.getChildByLabel('content')  as PIXI.Sprite  | null
     const fallback = container.getChildByLabel('fallback') as PIXI.Graphics
     const border   = container.getChildByLabel('border')   as PIXI.Graphics
 
@@ -151,9 +157,7 @@ function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
     // ── Texto ──────────────────────────────────────────────────────────────
     if (zone.type === 'text') {
         container.mask = null
-
         let textObj = container.getChildByLabel('pixi-text') as PIXI.Text | null
-
         if (!textObj) {
             textObj = new PIXI.Text({
                 text: zone.text || '',
@@ -162,19 +166,13 @@ function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
                     fontSize:   zone.fontSize   || 24,
                     fill:       0xf0b030,
                     stroke:     { color: 0x000000, width: 4 },
-                    dropShadow: {
-                        color:    0x000000,
-                        blur:     4,
-                        distance: 2,
-                        alpha:    0.8,
-                    },
+                    dropShadow: { color: 0x000000, blur: 4, distance: 2, alpha: 0.8 },
                 }
             })
             textObj.label = 'pixi-text'
             textObj.anchor.set(0.5)
             container.addChild(textObj)
         }
-
         textObj.text           = zone.text || ''
         textObj.x              = zone.x    || 0
         textObj.y              = zone.y    || 0
@@ -215,7 +213,7 @@ function updateZone(entry: ZoneEntry, zone: any, isEditing: boolean) {
         return
     }
 
-    // ── Zonas com path (brush / shapes) ───────────────────────────────────
+    // ── Áreas com path ─────────────────────────────────────────────────────
     if (!zone.path || zone.path.length < 2) return
 
     container.x = 0

@@ -1,20 +1,25 @@
-import { statusDefinitions } from '../data/constants';
+// src/utils/images.ts
+import * as PIXI from 'pixi.js'
+import { statusDefinitions } from '../data/constants'
 
 export function createImage(src: string): HTMLImageElement {
-    const img = new Image();
-    img.src = src;
-    return img;
+    const img = new Image()
+    img.src = src
+    return img
 }
 
-export function loadStatusIcons(): Record<string, HTMLImageElement> {
-    const icons: Record<string, HTMLImageElement> = {};
-    
-    statusDefinitions.forEach(status => {
-        const img = new Image();
-        // Lembre-se: no Vite, a pasta public é a raiz "/"
-        img.src = `/icons/${status.key}.png`; 
-        icons[status.key] = img;
-    });
-    
-    return icons;
+// Mapa global de texturas de status — preenchido assincronamente
+export const statusTextures: Record<string, PIXI.Texture> = {}
+
+export async function loadStatusIcons(): Promise<void> {
+    await Promise.all(
+        statusDefinitions.map(async status => {
+            try {
+                const tex = await PIXI.Assets.load(`/icons/${status.key}.png`)
+                statusTextures[status.key] = tex
+            } catch {
+                console.warn(`[status icon] Não encontrado: /icons/${status.key}.png`)
+            }
+        })
+    )
 }

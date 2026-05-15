@@ -1,5 +1,4 @@
 import { characters } from './data/character';
-import { createImage, loadStatusIcons } from './utils/images';
 import { statusDefinitions, statusLabelMap, BASE_GRID_SIZE } from './data/constants';
 import * as CombatLogic from './state/gameState';
 import * as Renderer from './engine/renderer';
@@ -13,6 +12,7 @@ import * as BestiaryUI from './ui/bestiaryUI';
 import { loadFromLocalStorage } from './state/gameState';
 import { initScene, app, viewport } from './engine/scene';
 import { gizmo } from './engine/transformGizmo';
+import { loadStatusIcons } from './utils/images'
 
 // ======================================================
 // CANVAS E CONTEXTO
@@ -72,11 +72,6 @@ function updateCharacterPanels() {
     updateCharacterMenu(current);
     renderSideCharacterStatuses(current);
 }
-
-// ======================================================
-// INICIALIZAÇÃO
-// ======================================================
-const statusIcons = loadStatusIcons();
 
 // Carrega personagens: prioriza character.ts, cai para localStorage se vazio
 if (characters.length === 0) {
@@ -377,19 +372,8 @@ function toggleSideMenu() {
 
 function toggleGrid() {
     state.showGrid = !state.showGrid;
-    document.getElementById('btn-grid')?.classList.toggle('active', state.showGrid);
-}
-
-function adjustZoom(delta: number) {
-    if (delta === -1) viewport.setZoom(1, true);
-    else viewport.setZoom(viewport.scaled + delta, true);
+    document.getElementById('btn-tool-grid')?.classList.toggle('active', state.showGrid);
 };
-
-function adjustTokenZoom(delta: number) {
-    if (delta === -1)     state.tokenScale = 1.0;
-    else if (delta === 2) state.tokenScale = 2.0;
-    else state.tokenScale = Math.min(Math.max(0.5, state.tokenScale + delta), 4.0);
-}
 
 // ======================================================
 // FERRAMENTAS
@@ -397,11 +381,11 @@ function adjustTokenZoom(delta: number) {
 function setTool(toolName: string) {
     state.currentDrawMode = toolName;
 
-    document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+    // Remove active só dos botões de ferramenta, não do grid
+    document.querySelectorAll('.tool-btn:not(.grid-toggle-btn)').forEach(btn => btn.classList.remove('active'));
     const activeBtn = document.getElementById(`btn-tool-${toolName}`) || document.getElementById(`tool-${toolName}`);
     activeBtn?.classList.add('active');
 
-    // Limpa todos os estados de interação
     state.editingZone        = null;
     state.selectedCharacter  = null;
     state.isDrawingCircle    = false;
@@ -612,26 +596,14 @@ const mouseTools = {
 // EXPOSIÇÃO GLOBAL (necessário para onclick no HTML)
 // ======================================================
 
-w.toggleSideMenu = () => sideMenu.classList.toggle('collapsed');
-w.toggleGrid = () => {
-    state.showGrid = !state.showGrid;
-    document.getElementById('btn-grid')?.classList.toggle('active', state.showGrid);
-};
+w.toggleSideMenu          = () => sideMenu.classList.toggle('collapsed');
+w.toggleGrid              = toggleGrid;
 w.setTool                 = setTool;
-w.adjustZoom = (delta: number) => {
+w.adjustZoom              = (delta: number) => {
     if (!viewport) return;
     if (delta === -1) viewport.animate({ scale: 1, time: 250 });
     else viewport.animate({ scale: viewport.scale.x + delta, time: 200 });
 };
-w.resetView = () => {
-    viewport.animate({
-        position: { x: 2000, y: 2000 }, // Centraliza no meio do seu mundo de 4000x4000
-        scale: 1,
-        time: 500,
-        ease: 'easeInOutExpo'
-    });
-};
-w.adjustTokenZoom         = adjustTokenZoom;
 w.menuGoBack              = RadialMenu.menuGoBack;
 w.closeMenu               = RadialMenu.closeMenu;
 w.deleteEffect            = RadialMenu.deleteEffect;
@@ -676,7 +648,9 @@ w.spawn = (id: string) => {
 };
 
 async function bootstrap() {
-await initScene(canvas);
+    await initScene(canvas);
+    await loadStatusIcons()
+    
     window.addEventListener('pointerdown', () => {
         console.log("Interação detectada, vídeos destravados.");
     }, { once: true });
@@ -717,7 +691,7 @@ await initScene(canvas);
         state.concentrationPulse += 0.08
         Renderer.drawGrid(BASE_GRID_SIZE, state.gridScale)
         syncEffects(state.activeZones, state.editingZone)
-        syncTokens(characters, state.tokenScale, state.selectedCharacter?.id)
+        syncTokens(characters, state.tokenScale, state.selectedCharacter?.id, state.concentrationPulse)
         syncUI(state)
         gizmo.tick()
     })

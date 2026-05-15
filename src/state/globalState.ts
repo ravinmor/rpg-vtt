@@ -28,7 +28,7 @@ export const state = {
     isDraggingEffectMenu: false,
     effectMenuDragOffset: { x: 0, y: 0 },
     gridScale: 1.0,
-    showGrid: false,
+    showGrid: true,
     tokenScale: 1.0,
     mouseDownTarget: null as any,
     mouseDownPoint: null as any,

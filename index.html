@@ -58,6 +58,10 @@
                         <span class="tool-icon">🗑️</span>
                         <span class="tool-label full-only">Limpar</span>
                     </button>
+                    <button class="tool-btn grid-toggle-btn active" id="btn-tool-grid" onclick="toggleGrid()" title="Ativar/desativar grade de referência">
+                        <span class="tool-icon">#</span>
+                        <span class="tool-label full-only">Grid</span>
+                    </button>
                 </div>
             </div>
 
@@ -90,35 +94,6 @@
                         </p>
                     </div>
                 </div>
-
-                <!-- SEÇÃO: VISUALIZAÇÃO -->
-                <div class="panel-section-label">🔍 Visualização</div>
-                <div class="view-control-rows">
-                    <div class="view-control-row">
-                        <span class="view-control-label">Grid</span>
-                        <div class="view-control-btns">
-                            <button class="view-btn" onclick="toggleGrid()" id="btn-grid" title="Ativar/desativar grade de referência"># Grade</button>
-                        </div>
-                    </div>
-                    <div class="view-control-row">
-                        <span class="view-control-label">Zoom</span>
-                        <div class="view-control-btns">
-                            <button class="view-btn" onclick="adjustZoom(-1)" title="Restaurar zoom padrão">↺ Reset</button>
-                            <button class="view-btn" onclick="adjustZoom(-0.1)" title="Diminuir zoom">− Menos</button>
-                            <button class="view-btn" onclick="adjustZoom(0.1)" title="Aumentar zoom">+ Mais</button>
-                        </div>
-                    </div>
-                    <div class="view-control-row">
-                        <span class="view-control-label">Tokens</span>
-                        <div class="view-control-btns">
-                            <button class="view-btn" onclick="adjustTokenZoom(-1)" title="Restaurar tamanho padrão dos tokens">↺ Reset</button>
-                            <button class="view-btn" onclick="adjustTokenZoom(-0.1)" title="Diminuir tokens">− Menor</button>
-                            <button class="view-btn" onclick="adjustTokenZoom(0.1)" title="Aumentar tokens">+ Maior</button>
-                            <button class="view-btn accent" onclick="adjustTokenZoom(2)" title="Tamanho para criaturas grandes">🐉 Grande</button>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="panel-divider"></div>
 
                 <!-- SEÇÃO: COMBATE -->

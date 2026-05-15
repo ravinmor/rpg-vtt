@@ -1,20 +1,21 @@
 // src/engine/renderer.ts
 import { layerGrid, viewport } from './scene'
+import { state } from '../state/globalState'
 
 export function drawGrid(baseSize: number, scale: number) {
+    layerGrid.visible = state.showGrid
+
+    if (!state.showGrid) return
+
     layerGrid.clear()
     layerGrid.setStrokeStyle({ width: 1, color: 0xffffff, alpha: 0.15 })
 
     const cellSize = baseSize * scale
+    const bounds = viewport.getVisibleBounds()
 
-    // Região do mundo atualmente visível
-    const bounds = viewport.getVisibleBounds()  // retorna { x, y, width, height }
-
-    // Primeira linha à esquerda/acima do que está visível
     const startX = Math.floor(bounds.x / cellSize) * cellSize
     const startY = Math.floor(bounds.y / cellSize) * cellSize
 
-    // Desenha só as linhas que aparecem na tela + 1 de margem
     for (let x = startX; x <= bounds.x + bounds.width + cellSize; x += cellSize) {
         layerGrid.moveTo(x, bounds.y - cellSize)
         layerGrid.lineTo(x, bounds.y + bounds.height + cellSize)
