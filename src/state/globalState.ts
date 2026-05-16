@@ -38,5 +38,5 @@ export const state = {
     sideMenu: document.getElementById('side-menu'),
     characterMenu: document.getElementById('character-menu'),
     menu: document.getElementById('radial-menu'),
-    characterMenuShell: document.getElementById('character-menu-shell')
+    characterMenuShell: document.getElementById('character-menu-shell')    
 };

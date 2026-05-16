@@ -12,6 +12,13 @@ import {
     initPenPreview,
     drawPenPreview,
 } from '../engine/penTool'
+import {
+    rulerState,
+    resetRuler,
+    initRuler,
+    drawRuler,
+} from '../engine/rulerTool'
+
 import { subLayerAreas } from '../engine/scene'
 
 let penMouseDown  = false   // true durante o arraste de handle
@@ -118,6 +125,7 @@ function selectZone(zone: any, mx: number, my: number, state: any) {
 // ─────────────────────────────────────────────────────────────────────────────
 export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, state: any, tools: any) {
     initPenPreview(subLayerAreas)
+    initRuler(subLayerAreas)
 
     // ── MOUSEDOWN ────────────────────────────────────────────────────────────
     window.addEventListener('mousedown', (e: MouseEvent) => {
@@ -214,6 +222,22 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
             penState.active = true
             return
         }
+
+        if (state.currentDrawMode === 'ruler') {
+            if (e.button === 2) {
+                // Clique direito → remove o último ponto
+                rulerState.points.pop()
+                if (rulerState.points.length === 0) resetRuler()
+                return
+            }
+            // Primeiro clique: ativa a régua
+            if (!rulerState.active) {
+                rulerState.active = true
+                rulerState.points = []
+            }
+            rulerState.points.push({ x: mx, y: my })
+            return
+        }
  
         // ── TEXTO ─────────────────────────────────────────────────────────────
         if (state.currentDrawMode === 'text') {
@@ -269,6 +293,11 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
                     last.cpIn  = { x: 2 * last.x - mx, y: 2 * last.y - my }
                 }
             }
+            return
+        }
+
+        if (state.currentDrawMode === 'ruler' && rulerState.active) {
+            rulerState.previewPoint = { x: mx, y: my }
             return
         }
 
@@ -423,17 +452,35 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
 
         state.mouseDownTarget = null;
         state.mouseDownPoint  = null;
+
+        
     });
 
     // ── KEYDOWN ───────────────────────────────────────────────────────────────
+// ── KEYDOWN (COM TRAVA DE REPETIÇÃO) ───────────────────────────────────────
     window.addEventListener('keydown', (e: KeyboardEvent) => {
+        if ((document.activeElement as HTMLElement)?.tagName === 'INPUT' || 
+            (document.activeElement as HTMLElement)?.tagName === 'TEXTAREA') return;
+
+        // SEGUNDO FILTRO: Se for repetição automática do teclado, ignora
+        if (e.repeat) return;
+
         if ((e.key === 'Delete' || e.key === 'Backspace') &&
             state.editingZone && state.currentDrawMode === 'select') {
-            if ((document.activeElement as HTMLElement)?.tagName === 'INPUT') return;
             state.activeZones = state.activeZones.filter((z: any) => z !== state.editingZone);
             state.editingZone = null;
             if (state.menu) state.menu.style.display = 'none';
             gizmo.detach();
+            
+            if (typeof (window as any).renderLayersList === 'function') {
+                (window as any).renderLayersList();
+            }
+        }
+
+        if ((e.key === 'r' || e.key === 'R') && state.currentDrawMode !== 'ruler') {
+            if (typeof (window as any).setTool === 'function') {
+                (window as any).setTool('ruler');
+            }
         }
 
         if (e.key === 'Enter' && state.currentDrawMode === 'pen' && penState.anchors.length >= 3) {
@@ -443,7 +490,37 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
         if (e.key === 'Escape' && state.currentDrawMode === 'pen') {
             resetPen()
         }
+
+        if (state.currentDrawMode === 'ruler' && e.key === 'Escape') {
+            resetRuler()
+            if (typeof (window as any).setTool === 'function') (window as any).setTool('select');
+        }
     });
+
+    // ── KEYUP (COMPORTAMENTO TEMPORÁRIO COMPLETO) ──────────────────────────────
+    window.addEventListener('keyup', (e: KeyboardEvent) => {
+        if ((document.activeElement as HTMLElement)?.tagName === 'INPUT' || 
+            (document.activeElement as HTMLElement)?.tagName === 'TEXTAREA') return;
+
+        if (e.key === 'r' || e.key === 'R') {
+            // Não importa se tem pontos ou não: soltou o R, a régua some na hora!
+            if (state.currentDrawMode === 'ruler') {
+                resetRuler(); // Limpa a linha e os pontos do Canvas
+                
+                if (typeof (window as any).setTool === 'function') {
+                    (window as any).setTool('select'); // Volta pro cursor de seleção
+                }
+            }
+        }
+    });
+
+    window.addEventListener('contextmenu', (e: MouseEvent) => {
+        if (state.currentDrawMode === 'ruler') {
+            e.preventDefault()
+            // Remove o último ponto (já tratado no mousedown com e.button === 2)
+            // Aqui só previne o menu de contexto do browser
+        }
+    })
 
     window.addEventListener('dblclick', (e: MouseEvent) => {
         if ((e.target as HTMLElement).tagName !== 'CANVAS') return

@@ -88,6 +88,14 @@
                 </div>
 
                 <div id="tab-sessao" class="tab-content">
+                    <div class="view-control-row" style="margin-top: 6px;">
+                        <span class="view-control-label">Unidade</span>
+                        <div class="view-control-btns">
+                            <button class="view-btn active" id="btn-unit-ft" onclick="window.setUnit('ft')">ft</button>
+                            <button class="view-btn" id="btn-unit-m" onclick="window.setUnit('m')">m</button>
+                        </div>
+                    </div>
+                    
                     <div class="panel-section-label">Personagem Selecionado</div>
                     <div class="entity-item" style="cursor: default; background: rgba(212, 163, 77, 0.05); border-color: #d4a34d66;">
                         <div class="entity-avatar" id="side-char-avatar" style="background: #d4a34d;">?</div>
@@ -105,7 +113,6 @@
                         <i data-lucide="save"></i> Salvar Log da Sessão
                     </button>
                 </div>
-
                 <div id="tab-campanha" class="tab-content">
                     <div class="panel-section-label">Páginas de Cenário</div>
                     
@@ -318,14 +325,17 @@
                 <button class="tool-btn active" id="btn-tool-select" onclick="setTool('select')" title="Seleção">
                     <span class="tool-icon"><i data-lucide="mouse-pointer-2"></i></span>
                 </button>
-                <button class="tool-btn" id="btn-tool-pen" onclick="setTool('pen')" title="Caneta">
-                    <span class="tool-icon"><i data-lucide="pen-tool"></i></span>
+                <button class="tool-btn" id="btn-tool-ruler" onclick="setTool('ruler')" title="Régua">
+                    <span class="tool-icon"><i data-lucide="ruler"></i></span>
                 </button>
             </div>
 
             <div class="toolbar-divider">⬥</div>
 
             <div class="toolbar-group">
+                <button class="tool-btn" id="btn-tool-pen" onclick="setTool('pen')" title="Caneta">
+                    <span class="tool-icon"><i data-lucide="pen-tool"></i></span>
+                </button>
                 <button class="tool-btn" id="tool-brush" onclick="setTool('brush')" title="Pincel">
                     <span class="tool-icon"><i data-lucide="brush"></i></span>
                 </button>

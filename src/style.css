@@ -486,6 +486,7 @@ canvas {
     color: var(--color-subtitle);
     white-space: nowrap;
     width: 48px;
+    margin: 0 10px;
     flex-shrink: 0;
 }
 .view-control-btns {
@@ -493,6 +494,14 @@ canvas {
     gap: 4px;
     flex-wrap: wrap;
 }
+
+.view-control-btns .view-btn.active {
+    border-color: var(--color-ornament-light);
+    background: var(--color-btn-active-start);
+    color: var(--color-ornament-light);
+    box-shadow: 0 0 8px var(--color-crest-glow);
+}
+
 .view-btn {
     padding: 5px 9px;
     background: linear-gradient(135deg, var(--color-btn-bg-start), var(--color-btn-bg-end));

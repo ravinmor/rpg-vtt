@@ -1,5 +1,5 @@
 import { characters } from './data/character';
-import { statusDefinitions, statusLabelMap, BASE_GRID_SIZE } from './data/constants';
+import { statusDefinitions, statusLabelMap, BASE_GRID_SIZE, setDistanceUnit } from './data/constants';
 import * as CombatLogic from './state/gameState';
 import * as Renderer from './engine/renderer';
 import { syncTokens } from './engine/characterDrawer';
@@ -13,8 +13,9 @@ import { loadFromLocalStorage } from './state/gameState';
 import { initScene, app, viewport } from './engine/scene';
 import { gizmo } from './engine/transformGizmo';
 import { loadStatusIcons } from './utils/images';
-import { createIcons, Map, Users, BookOpen, MousePointer2, Square, Circle, Triangle, Type, Grid3X3, Trash2, Sparkle, Brush, Hash, Copy, WandSparkles, Eye, EyeOff, Lock, Unlock, ChevronLeft, X, PenTool } from 'lucide';
+import { createIcons, Map, Users, BookOpen, MousePointer2, Square, Circle, Triangle, Type, Grid3X3, Trash2, Sparkle, Brush, Hash, Copy, WandSparkles, Eye, EyeOff, Lock, Unlock, ChevronLeft, X, PenTool, Ruler } from 'lucide';
 import { drawPenPreview, resetPen } from './engine/penTool';
+import { drawRuler, resetRuler } from './engine/rulerTool'
 
 // ======================================================
 // CANVAS E CONTEXTO
@@ -389,7 +390,8 @@ const updateIcons = () => {
             EyeOff,
             Lock,
             Unlock,
-            PenTool
+            PenTool,
+            Ruler
         }
     });
 };
@@ -405,6 +407,10 @@ function toggleGrid() {
 function setTool(toolName: string) {
     // Ao sair da caneta, limpa rascunhos que não receberam efeito
     // (mas só se o usuário não os selecionou depois — editingZone aponta para eles)
+    if (toolName !== 'ruler') {
+        resetRuler()
+    }
+
     if (state.currentDrawMode === 'pen' && toolName !== 'pen') {
         state.activeZones = state.activeZones.filter((z: any) =>
             !z.isDraft || z === state.editingZone
@@ -713,6 +719,11 @@ w.saveCharacterEdit       = saveCharacterEdit;
 w.renderLayersList        = renderLayersList;
 w.createIcons             = createIcons;
 w.updateIcons             = updateIcons
+w.setUnit = (unit: 'ft' | 'm') => {
+    setDistanceUnit(unit)
+    document.getElementById('btn-unit-ft')?.classList.toggle('active', unit === 'ft')
+    document.getElementById('btn-unit-m')?.classList.toggle('active', unit === 'm')
+}
 w.applyCharacterHp = (direction: number) => {
     if (!state.selectedCharacter) return;
     const amount = Math.max(0, Number(characterHpInput.value) || 0);
@@ -805,8 +816,9 @@ async function bootstrap() {
         syncEffects(state.activeZones, state.editingZone)
         syncTokens(characters, state.tokenScale, state.selectedCharacter?.id, state.concentrationPulse)
         syncUI(state)
-        drawPenPreview();
         gizmo.tick()
+        drawPenPreview();
+        drawRuler() 
     })
     syncEffects(state.activeZones, state.editingZone);
     renderInitiativeList();
