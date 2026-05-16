@@ -20,7 +20,7 @@ import { drawPings, resetPings } from './engine/pingTool';
 import { initDayNight, setDayPhase, tickDayNight } from './engine/dayNight'
 import { initWeather, setWeather, tickWeather } from './engine/weatherSystem'
 import { positiveStatuses } from './data/positiveStatus';
-import { clearFog, isFogActive, loadFog, toggleFog } from './engine/fogOfWar';
+import { clearFog, initFog, isFogActive, loadFog, tickFogMist, toggleFog } from './engine/fogOfWar';
 
 // ======================================================
 // CANVAS E CONTEXTO
@@ -958,11 +958,12 @@ w.clearFogArea = () => clearFog()
 
 async function bootstrap() {
     await initScene(canvas);
-    loadFog();
     await loadStatusIcons();
     loadSessionNotes();
     initDayNight();
     initWeather();
+    initFog();      // ← primeiro inicializa (cria mistFilter, mistBlobs, etc.)
+    loadFog();  
 
     window.addEventListener('pointerdown', () => {
         console.log("Interação detectada, vídeos destravados.");
@@ -1012,6 +1013,7 @@ async function bootstrap() {
         drawPings(layerPings);
         tickDayNight();
         tickWeather();
+        tickFogMist();
     })
     syncEffects(state.activeZones, state.editingZone);
     renderInitiativeList();
