@@ -86,23 +86,91 @@
                         <i data-lucide="download"></i> Importar Personagens
                     </button>
                 </div>
-
                 <div id="tab-sessao" class="tab-content">
-                    <div class="view-control-row" style="margin-top: 6px;">
-                        <span class="view-control-label">Unidade</span>
+                    <div class="view-control-row" style="margin: 6px;">
+                        <span class="view-control-label">Unidade de Medida</span>
                         <div class="view-control-btns">
                             <button class="view-btn active" id="btn-unit-ft" onclick="window.setUnit('ft')">ft</button>
                             <button class="view-btn" id="btn-unit-m" onclick="window.setUnit('m')">m</button>
                         </div>
                     </div>
+
+                    <div class="view-control-label" style="margin: 8px;">Fase do Dia</div>
+                    <div class="day-phase-control"> <button
+                            class="day-phase-btn active"
+                            id="btn-phase-day"
+                            onclick="setDayPhase('day')"
+                            title="Dia — iluminação plena"
+                        >
+                            <span class="tool-icon"><i data-lucide="sun"></i></span>
+                            <span class="day-phase-label">Dia</span>
+                        </button>
                     
-                    <div class="panel-section-label">Personagem Selecionado</div>
+                        <button
+                            class="day-phase-btn"
+                            id="btn-phase-dusk"
+                            onclick="setDayPhase('dusk')"
+                            title="Crepúsculo — luz âmbar"
+                        >
+                            <span class="tool-icon"><i data-lucide="sunset"></i></span>
+                            <span class="day-phase-label">Crepúsculo</span>
+                        </button>
+                    
+                        <button
+                            class="day-phase-btn"
+                            id="btn-phase-night"
+                            onclick="setDayPhase('night')"
+                            title="Noite — escuridão azulada"
+                        >
+                            <span class="tool-icon"><i data-lucide="moon"></i></span>
+                            <span class="day-phase-label">Noite</span>
+                        </button>
+                    
+                    </div> <div class="panel-divider"></div>
+
+                    <div class="panel-section-label" style="margin-top: 8px;">Clima</div>
+                    <div class="weather-control">
+                    
+                        <button class="weather-btn active" data-weather="clear" onclick="setWeather('clear')" title="Limpo">
+                            <span class="tool-icon"><i data-lucide="sun"></i></span>
+                            <span class="day-phase-label">Limpo</span>
+                        </button>
+                    
+                        <button class="weather-btn" data-weather="cloudy" onclick="setWeather('cloudy')" title="Nublado">
+                            <span class="tool-icon"><i data-lucide="cloud"></i></span>
+                            <span class="day-phase-label">Nublado</span>
+                        </button>
+                    
+                        <button class="weather-btn" data-weather="rain" onclick="setWeather('rain')" title="Chuva">
+                            <span class="tool-icon"><i data-lucide="cloud-rain"></i></span>
+                            <span class="day-phase-label">Chuva</span>
+                        </button>
+                    
+                        <button class="weather-btn" data-weather="storm" onclick="setWeather('storm')" title="Tempestade">
+                            <span class="tool-icon"><i data-lucide="cloud-lightning"></i></span>
+                            <span class="day-phase-label">Tempestade</span>
+                        </button>
+                    
+                        <button class="weather-btn" data-weather="snow" onclick="setWeather('snow')" title="Neve">
+                            <span class="tool-icon"><i data-lucide="snowflake"></i></span>
+                            <span class="day-phase-label">Neve</span>
+                        </button>
+                    
+                        <button class="weather-btn" data-weather="fog" onclick="setWeather('fog')" title="Névoa">
+                            <span class="tool-icon"><i data-lucide="wind"></i></span>
+                            <span class="day-phase-label">Névoa</span>
+                        </button>
+                    
+                    </div>
+                    
+                    <div class="panel-divider"></div>
+                    
+                    <div class="view-control-label">Personagem Selecionado</div>
                     <div class="entity-item" style="cursor: default; background: rgba(212, 163, 77, 0.05); border-color: #d4a34d66;">
                         <div class="entity-avatar" id="side-char-avatar" style="background: #d4a34d;">?</div>
                         <div class="entity-info">
                             <span class="entity-name" id="side-character-name">Nenhum selecionado</span>
-                            <div id="side-character-statuses" class="side-char-statuses">
-                                </div>
+                            <div id="side-character-statuses" class="side-char-statuses"></div>
                         </div>
                     </div>
                     

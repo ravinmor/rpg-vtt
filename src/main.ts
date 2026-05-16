@@ -13,10 +13,12 @@ import { loadFromLocalStorage } from './state/gameState';
 import { initScene, app, viewport, subLayerAreas, layerPings } from './engine/scene';
 import { gizmo } from './engine/transformGizmo';
 import { loadStatusIcons } from './utils/images';
-import { createIcons, Map, Users, BookOpen, MousePointer2, Square, Circle, Triangle, Type, Grid3X3, Trash2, Sparkle, Brush, Hash, Copy, WandSparkles, Eye, EyeOff, Lock, Unlock, ChevronLeft, X, PenTool, Ruler, Target, Crosshair } from 'lucide';
+import { createIcons, Map, Users, BookOpen, MousePointer2, Square, Circle, Triangle, Type, Grid3X3, Trash2, Sparkle, Brush, Hash, Copy, WandSparkles, Eye, EyeOff, Lock, Unlock, ChevronLeft, X, PenTool, Ruler, Target, Crosshair, Sun, Sunset, Moon, Cloud, CloudRain, CloudLightning, Snowflake, Wind } from 'lucide';
 import { drawPenPreview, resetPen } from './engine/penTool';
 import { drawRuler, resetRuler } from './engine/rulerTool'
 import { drawPings, resetPings } from './engine/pingTool';
+import { initDayNight, setDayPhase, tickDayNight } from './engine/dayNight'
+import { initWeather, setWeather, tickWeather } from './engine/weatherSystem'
 
 // ======================================================
 // CANVAS E CONTEXTO
@@ -393,7 +395,15 @@ const updateIcons = () => {
             Unlock,
             PenTool,
             Ruler,
-            Crosshair
+            Crosshair,
+            Sun,
+            Sunset,
+            Moon,
+            Cloud,
+            CloudRain,
+            CloudLightning,
+            Snowflake,
+            Wind,
         }
     });
 };
@@ -731,6 +741,8 @@ w.saveCharacterEdit       = saveCharacterEdit;
 w.renderLayersList        = renderLayersList;
 w.createIcons             = createIcons;
 w.updateIcons             = updateIcons
+w.setDayPhase             = setDayPhase;
+w.setWeather              = setWeather;
 w.setUnit = (unit: 'ft' | 'm') => {
     setDistanceUnit(unit)
     document.getElementById('btn-unit-ft')?.classList.toggle('active', unit === 'ft')
@@ -785,6 +797,8 @@ w.toggleLayerLock = (id: string, e: MouseEvent) => {
 async function bootstrap() {
     await initScene(canvas);
     await loadStatusIcons()
+    initDayNight()
+    initWeather()
 
     window.addEventListener('pointerdown', () => {
         console.log("Interação detectada, vídeos destravados.");
@@ -832,6 +846,8 @@ async function bootstrap() {
         drawPenPreview();
         drawRuler();
         drawPings(layerPings);
+        tickDayNight();
+        tickWeather();
     })
     syncEffects(state.activeZones, state.editingZone);
     renderInitiativeList();

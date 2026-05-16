@@ -486,7 +486,7 @@ canvas {
     color: var(--color-subtitle);
     white-space: nowrap;
     width: 48px;
-    margin: 0 10px;
+    margin-right: 100px;
     flex-shrink: 0;
 }
 .view-control-btns {
@@ -1801,4 +1801,102 @@ textarea.character-menu-input {
 .layers-container {
     scrollbar-width: thin;
     scrollbar-color: #3d352a rgba(26, 19, 6, 0.5);
+}
+
+.day-phase-control {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 0 5px;
+}
+
+.day-phase-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px;
+    background: #282118;
+    border: 1px solid #3d352a;
+    border-radius: 6px;
+    color: #8c8273;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Cinzel', serif;
+}
+
+.day-phase-btn:hover {
+    background: #352c21;
+    border-color: #5a4f3f;
+    color: #f1e4d1;
+    transform: translateY(-1px);
+}
+
+/* Dia — dourado */
+#btn-phase-day.active {
+    background: #282118;
+    border: 2px solid #d4a34d;
+    color: #d4a34d;
+    box-shadow: 0 0 10px rgba(212, 163, 77, 0.3);
+}
+
+/* Crepúsculo — laranja */
+#btn-phase-dusk.active {
+    background: rgba(180, 80, 10, 0.15);
+    border: 2px solid #e07020;
+    color: #f09040;
+    box-shadow: 0 0 10px rgba(200, 100, 20, 0.25);
+}
+
+/* Noite — azul */
+#btn-phase-night.active {
+    background: rgba(10, 20, 60, 0.4);
+    border: 2px solid #3060b0;
+    color: #80b0ff;
+    box-shadow: 0 0 10px rgba(30, 60, 180, 0.3);
+}
+
+.day-phase-label {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.weather-control {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 0 5px;
+}
+ 
+.weather-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 4px;
+    background: #282118;
+    border: 1px solid #3d352a;
+    border-radius: 6px;
+    color: #8c8273;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Cinzel', serif;
+}
+ 
+.weather-btn:hover {
+    background: #352c21;
+    border-color: #5a4f3f;
+    color: #f1e4d1;
+    transform: translateY(-1px);
+}
+ 
+.weather-btn.active {
+    background: #282118;
+    border: 2px solid #d4a34d;
+    color: #d4a34d;
+    box-shadow: 0 0 10px rgba(212, 163, 77, 0.3);
 }
