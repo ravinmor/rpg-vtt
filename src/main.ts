@@ -13,7 +13,7 @@ import { loadFromLocalStorage } from './state/gameState';
 import { initScene, app, viewport, subLayerAreas, layerPings } from './engine/scene';
 import { gizmo } from './engine/transformGizmo';
 import { loadStatusIcons } from './utils/images';
-import { createIcons, Map, Users, BookOpen, MousePointer2, Square, Circle, Triangle, Type, Grid3X3, Trash2, Sparkle, Brush, Hash, Copy, WandSparkles, Eye, EyeOff, Lock, Unlock, ChevronLeft, X, PenTool, Ruler, Target, Crosshair, Sun, Sunset, Moon, Cloud, CloudRain, CloudLightning, Snowflake, Wind } from 'lucide';
+import { createIcons, Map, Users, BookOpen, MousePointer2, Square, Circle, Triangle, Type, Grid3X3, Trash2, Sparkle, Brush, Hash, Copy, WandSparkles, Eye, EyeOff, Lock, Unlock, ChevronLeft, X, PenTool, Ruler, Target, Crosshair, Sun, Sunset, Moon, Cloud, CloudRain, CloudLightning, Snowflake, Wind, CloudSnow, Blend, ThermometerSun, ThermometerSnowflake, Tornado, CloudFog, Flame, BrickWallFire } from 'lucide';
 import { drawPenPreview, resetPen } from './engine/penTool';
 import { drawRuler, resetRuler } from './engine/rulerTool'
 import { drawPings, resetPings } from './engine/pingTool';
@@ -497,6 +497,13 @@ const updateIcons = () => {
             CloudLightning,
             Snowflake,
             Wind,
+            CloudSnow,
+            Blend,
+            ThermometerSun,
+            Tornado,
+            CloudFog,
+            Flame,
+            BrickWallFire
         }
     });
 };
