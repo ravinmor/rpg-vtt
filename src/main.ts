@@ -19,11 +19,14 @@ import { drawRuler, resetRuler } from './engine/rulerTool'
 import { drawPings, resetPings } from './engine/pingTool';
 import { initDayNight, setDayPhase, tickDayNight } from './engine/dayNight'
 import { initWeather, setWeather, tickWeather } from './engine/weatherSystem'
+import { positiveStatuses } from './data/positiveStatus';
 
 // ======================================================
 // CANVAS E CONTEXTO
 // ======================================================
 const canvas = document.getElementById('vttCanvas') as HTMLCanvasElement;
+const NOTES_KEY = 'vtt_session_notes'
+let _notesSaveTimer: ReturnType<typeof setTimeout> | null = null
 
 // ======================================================
 // ELEMENTOS DE UI
@@ -41,6 +44,61 @@ const characterStatusGrid = document.getElementById('character-status-grid')!;
 const sideCharacterName   = document.getElementById('side-character-name')!;
 const sideCharacterStatuses = document.getElementById('side-character-statuses')!;
 const w = (window as any);
+
+
+function saveSessionNotes() {
+    const textarea = document.getElementById('session-notes-textarea') as HTMLTextAreaElement
+    const indicator = document.getElementById('notes-save-indicator')
+    if (!textarea || !indicator) return
+
+    // Feedback imediato de "salvando"
+    indicator.textContent = '⟳ Salvando...'
+    indicator.className = 'notes-saved notes-saving visible'
+
+    // Debounce — salva 800ms após parar de digitar
+    if (_notesSaveTimer) clearTimeout(_notesSaveTimer)
+    _notesSaveTimer = setTimeout(() => {
+        try {
+            localStorage.setItem(NOTES_KEY, textarea.value)
+            indicator.textContent = '✓ Salvo'
+            indicator.className = 'notes-saved visible'
+
+            // Some após 2 segundos
+            setTimeout(() => {
+                indicator.classList.remove('visible')
+            }, 2000)
+        } catch (e) {
+            indicator.textContent = '✗ Erro ao salvar'
+            indicator.className = 'notes-saved visible'
+            console.error('Erro ao salvar notas:', e)
+        }
+    }, 800)
+}
+
+function loadSessionNotes() {
+    const textarea = document.getElementById('session-notes-textarea') as HTMLTextAreaElement
+    if (!textarea) return
+    const saved = localStorage.getItem(NOTES_KEY)
+    if (saved) textarea.value = saved
+}
+
+function exportSessionNotes() {
+    const textarea = document.getElementById('session-notes-textarea') as HTMLTextAreaElement
+    if (!textarea || !textarea.value.trim()) {
+        alert('Sem notas para exportar.')
+        return
+    }
+
+    const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')
+    const blob = new Blob([textarea.value], { type: 'text/plain;charset=utf-8' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `notas-sessao-${date}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+}
+
 
 // ======================================================
 // COORDENADAS DO MAPA
@@ -124,20 +182,55 @@ function removeStatus(characterId: string, statusKey: string) {
 // ======================================================
 // PAINEL LATERAL — STATUS DO PERSONAGEM
 // ======================================================
+
 function renderCharacterStatusButtons(character: any) {
-    characterStatusGrid.innerHTML = '';
+    characterStatusGrid.innerHTML = ''
+
+    // ── Seção: Condições (negativas) ──
+    const negativeHeader = document.createElement('div')
+    negativeHeader.className = 'status-section-header negative'
+    negativeHeader.textContent = 'Condições'
+    characterStatusGrid.appendChild(negativeHeader)
+
+    const negativeWrap = document.createElement('div')
+    negativeWrap.className = 'status-btn-group'
+    characterStatusGrid.appendChild(negativeWrap)
 
     statusDefinitions.forEach(status => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = `character-status-btn${character.statuses.includes(status.key) ? ' active' : ''}`;
-        button.textContent = status.label;
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = `character-status-btn negative${character.statuses.includes(status.key) ? ' active' : ''}`
+        button.textContent = status.label
+        button.title = status.key
         button.addEventListener('click', e => {
-            e.stopPropagation();
-            toggleStatus(character.id, status.key);
-        });
-        characterStatusGrid.appendChild(button);
-    });
+            e.stopPropagation()
+            toggleStatus(character.id, status.key)
+        })
+        negativeWrap.appendChild(button)
+    })
+
+    // ── Seção: Bênçãos (positivas) ──
+    const positiveHeader = document.createElement('div')
+    positiveHeader.className = 'status-section-header positive'
+    positiveHeader.textContent = 'Bênçãos'
+    characterStatusGrid.appendChild(positiveHeader)
+
+    const positiveWrap = document.createElement('div')
+    positiveWrap.className = 'status-btn-group'
+    characterStatusGrid.appendChild(positiveWrap)
+
+    Object.entries(positiveStatuses.positive_statuses).forEach(([key, data]) => {
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = `character-status-btn positive${character.statuses.includes(key) ? ' active' : ''}`
+        button.textContent = (data as any).name_en
+        button.title = (data as any).description
+        button.addEventListener('click', e => {
+            e.stopPropagation()
+            toggleStatus(character.id, key)
+        })
+        positiveWrap.appendChild(button)
+    })
 }
 
 function renderSideCharacterStatuses(character: any) {
@@ -697,6 +790,53 @@ function renderLayersList() {
     }
 }
 
+// ══ MARKDOWN PARSER (sem bibliotecas) ══
+function parseMarkdown(text: string): string {
+    return text
+        // Escapa HTML para segurança
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        // Títulos
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm,  '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm,   '<h1>$1</h1>')
+        // Negrito e itálico
+        .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+        .replace(/\*\*(.+?)\*\*/g,     '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g,         '<em>$1</em>')
+        // Código inline
+        .replace(/`(.+?)`/g, '<code>$1</code>')
+        // Citação
+        .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+        // Lista
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+        // Linha horizontal
+        .replace(/^---$/gm, '<hr>')
+        // Quebras de linha (parágrafos)
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>')
+}
+
+function setNotesMode(mode: 'edit' | 'preview') {
+    const textarea = document.getElementById('session-notes-textarea') as HTMLTextAreaElement
+    const preview  = document.getElementById('session-notes-preview')!
+    const btnEdit  = document.getElementById('btn-notes-edit')!
+    const btnPrev  = document.getElementById('btn-notes-preview')!
+
+    if (mode === 'preview') {
+        preview.innerHTML = `<p>${parseMarkdown(textarea.value || '')}</p>`
+        textarea.style.display = 'none'
+        preview.style.display  = 'block'
+        btnEdit.classList.remove('active')
+        btnPrev.classList.add('active')
+    } else {
+        textarea.style.display = 'block'
+        preview.style.display  = 'none'
+        btnEdit.classList.add('active')
+        btnPrev.classList.remove('active')
+    }
+}
+
 // ======================================================
 // INICIALIZAÇÃO DA UI E LOOP
 // ======================================================
@@ -743,6 +883,9 @@ w.createIcons             = createIcons;
 w.updateIcons             = updateIcons
 w.setDayPhase             = setDayPhase;
 w.setWeather              = setWeather;
+w.saveSessionNotes        = saveSessionNotes
+w.exportSessionNotes      = exportSessionNotes
+w.setNotesMode            = setNotesMode
 w.setUnit = (unit: 'ft' | 'm') => {
     setDistanceUnit(unit)
     document.getElementById('btn-unit-ft')?.classList.toggle('active', unit === 'ft')
@@ -797,6 +940,7 @@ w.toggleLayerLock = (id: string, e: MouseEvent) => {
 async function bootstrap() {
     await initScene(canvas);
     await loadStatusIcons()
+    loadSessionNotes()
     initDayNight()
     initWeather()
 

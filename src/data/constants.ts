@@ -6,22 +6,21 @@ export type DistanceUnit = 'ft' | 'm'
 export let distanceUnit: DistanceUnit = 'ft'
 
 export const statusDefinitions = [
-    { key: 'blinded', label: 'Cego' },
-    { key: 'cursed', label: 'Amaldiçoado' },
-    { key: 'deafened', label: 'Ensurdecido' },
-    { key: 'frightened', label: 'Amedrontado' },
-    { key: 'grappled', label: 'Agarrado' },
-    { key: 'incapacitated', label: 'Incapacitado' },
-    { key: 'invisible', label: 'Invisível' },
-    { key: 'paralyzed', label: 'Paralisado' },
-    { key: 'petrified', label: 'Petrificado' },
-    { key: 'poisoned', label: 'Envenenado' },
-    { key: 'prone', label: 'Caído' },
-    { key: 'restrained', label: 'Contido' },
-    { key: 'stunned', label: 'Atordoado' },
-    { key: 'unconscious', label: 'Inconsciente' },
-    { key: 'concentration', label: 'Concentração' },
-    { key: 'dead', label: 'Morto' }
+    { key: 'blinded', label: 'Blinded' },
+    { key: 'cursed', label: 'Cursed' },
+    { key: 'deafened', label: 'Deafened' },
+    { key: 'frightened', label: 'Frightened' },
+    { key: 'grappled', label: 'Grappled' },
+    { key: 'incapacitated', label: 'Incapacitated' },
+    { key: 'paralyzed', label: 'Paralyzed' },
+    { key: 'petrified', label: 'Petrified' },
+    { key: 'poisoned', label: 'Poisoned' },
+    { key: 'prone', label: 'Prone' },
+    { key: 'restrained', label: 'Restrained' },
+    { key: 'stunned', label: 'Stunned' },
+    { key: 'unconscious', label: 'Unconscious' },
+    { key: 'concentration', label: 'Concentration' },
+    { key: 'dead', label: 'Dead' }
 ];
 
 export const statusLabelMap = Object.fromEntries(

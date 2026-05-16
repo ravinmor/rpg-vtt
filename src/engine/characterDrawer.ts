@@ -3,10 +3,14 @@ import * as PIXI from 'pixi.js'
 import { layerTokens } from './scene'
 import { TOKEN_SIZE } from '../data/constants'
 import { statusTextures } from '../utils/images'
+import { positiveStatuses } from '../data/positiveStatus'
 
 const tokenMap     = new Map<string, PIXI.Container>()
 const textureCache = new Map<string, PIXI.Texture>()
 const loadingUrls  = new Set<string>()
+
+// Set de chaves positivas para lookup rápido
+const positiveKeys = new Set(Object.keys(positiveStatuses.positive_statuses))
 
 export function syncTokens(characters: any[], tokenScale: number, selectedId: string | null, pulse: number = 0) {
     const activeIds = new Set(characters.map(c => c.id))
@@ -33,6 +37,11 @@ export function syncTokens(characters: any[], tokenScale: number, selectedId: st
 function createToken(char: any): PIXI.Container {
     const container = new PIXI.Container()
     container.label = char.id
+
+    // AURA DE BÊNÇÃO — fica atrás de tudo
+    const blessingAura = new PIXI.Graphics()
+    blessingAura.label = 'blessingAura'
+    container.addChild(blessingAura)
 
     const circle = new PIXI.Graphics()
     circle.label = 'body'
@@ -65,7 +74,6 @@ function createToken(char: any): PIXI.Container {
     nameText.anchor.set(0.5, 1)
     container.addChild(nameText)
 
-    // ← ISSO ESTAVA FALTANDO
     const statusContainer = new PIXI.Container()
     statusContainer.label = 'statuses'
     container.addChild(statusContainer)
@@ -94,11 +102,46 @@ function updateToken(
     const baseColor  = colorToNumber(char.color)
     const isSelected = selectedId === char.id
     const isTurn     = !!char.isTurn
+    const statuses: string[] = char.statuses || []
 
     container.x = char.x
     container.y = char.y
 
-    // Corpo
+    // ── Aura de Bênção ──
+    const blessingAura = container.getChildByLabel('blessingAura') as PIXI.Graphics
+    if (blessingAura) {
+        blessingAura.clear()
+
+        const activePositive = statuses.filter(s => positiveKeys.has(s))
+
+        if (activePositive.length > 0) {
+            const auraColor = getBlessingAuraColor(activePositive)
+            const p = Math.sin(pulse * 0.7)
+
+            // Bloom externo difuso
+            blessingAura.circle(0, 0, r + 40).fill({ color: auraColor, alpha: 0.06 + p * 0.03 })
+            blessingAura.circle(0, 0, r + 30).fill({ color: auraColor, alpha: 0.10 + p * 0.04 })
+            blessingAura.circle(0, 0, r + 20).fill({ color: auraColor, alpha: 0.18 + p * 0.06 })
+            blessingAura.circle(0, 0, r + 12).fill({ color: auraColor, alpha: 0.28 + p * 0.08 })
+            blessingAura.circle(0, 0, r + 6).fill({ color: auraColor, alpha: 0.40 + p * 0.10 })
+            blessingAura.circle(0, 0, r + 2).fill({ color: auraColor, alpha: 0.55 + p * 0.12 })
+
+            // Borda brilhante
+            blessingAura.circle(0, 0, r + 3).stroke({
+                color: auraColor,
+                width: 3,
+                alpha: 0.85 + p * 0.15
+            })
+            // Borda interna branca para reforçar
+            blessingAura.circle(0, 0, r + 1).stroke({
+                color: 0xffffff,
+                width: 1,
+                alpha: 0.3 + p * 0.1
+            })
+        }
+    }
+
+    // ── Corpo ──
     const circle = container.getChildByLabel('body') as PIXI.Graphics
     if (circle) {
         circle.clear()
@@ -123,7 +166,7 @@ function updateToken(
         }
     }
 
-    // Avatar
+    // ── Avatar ──
     const imgUrl     = char.visuals?.token_img || char.avatar || ''
     const imgSprite  = container.getChildByLabel('avatar')     as PIXI.Sprite
     const avatarMask = container.getChildByLabel('avatarMask') as PIXI.Graphics
@@ -135,7 +178,7 @@ function updateToken(
         avatarMask.visible = false
     }
 
-    // Anel de HP
+    // ── Anel de HP ──
     const ring = container.getChildByLabel('ring') as PIXI.Graphics
     if (ring) {
         ring.clear()
@@ -148,7 +191,7 @@ function updateToken(
         }
     }
 
-    // Nome
+    // ── Nome ──
     const nameText = container.getChildByLabel('name') as PIXI.Text
     if (nameText) {
         nameText.text       = char.name
@@ -156,7 +199,7 @@ function updateToken(
         nameText.style.fill = 0xffffff
     }
 
-    // Ícones de status
+    // ── Ícones de status (apenas negativos) ──
     const statusContainer = container.children.find(
         (c: any) => c.label === 'statuses'
     ) as PIXI.Container
@@ -164,15 +207,17 @@ function updateToken(
     if (statusContainer) {
         statusContainer.removeChildren()
 
-        const statuses: string[] = char.statuses || []
-        if (statuses.length > 0) {
+        // Filtra apenas status negativos — bênçãos são representadas pela aura
+        const negativeStatuses = statuses.filter(key => !positiveKeys.has(key))
+
+        if (negativeStatuses.length > 0) {
             const iconSize = 18
             const spacing  = iconSize + 3
-            const totalW   = statuses.length * spacing - 3
+            const totalW   = negativeStatuses.length * spacing - 3
             const startX   = -totalW / 2 + iconSize / 2
             const iconY    = r + iconSize / 2 + 16
 
-            statuses.forEach((key: string, i: number) => {
+            negativeStatuses.forEach((key: string, i: number) => {
                 const x   = startX + i * spacing
                 const tex = statusTextures[key]
 
@@ -185,6 +230,7 @@ function updateToken(
                     sprite.y = iconY
                     statusContainer.addChild(sprite)
                 } else {
+                    // Fallback: ponto vermelho apenas para status negativos sem ícone
                     const dot = new PIXI.Graphics()
                     dot.circle(0, 0, iconSize / 2).fill({ color: 0xcc3333 })
                     dot.x = x
@@ -196,6 +242,38 @@ function updateToken(
     }
 
     container.alpha = isSelected ? 1 : 0.85
+}
+
+// ─────────────────────────────────────────────
+// COR DA AURA POR BÊNÇÃO
+// ─────────────────────────────────────────────
+function getBlessingAuraColor(activePositive: string[]): number {
+    const colorMap: Record<string, number> = {
+        raging:            0xff4422,  // vermelho — fúria
+        enlarged:          0xff6600,  // laranja — ampliado
+        hasted:            0x00ddff,  // ciano — acelerado
+        invisible:         0x8844ff,  // roxo — invisível
+        flying:            0x44aaff,  // azul claro — voando
+        heroic:            0xff8800,  // âmbar — heroico
+        invulnerable:      0xffffff,  // branco — invulnerável
+        divinely_shielded: 0xffd700,  // dourado — proteção divina
+        truesight:         0xcc44ff,  // violeta — visão verdadeira
+        regenerating:      0x44ff88,  // verde brilhante — regenerando
+        sanctuary:         0xffeebb,  // branco quente — santuário
+        death_warded:      0xaaffcc,  // verde pálido — proteção da morte
+        blessed:           0xf0d060,  // dourado suave — abençoado
+        inspired:          0x60d0ff,  // azul suave — inspirado
+        hopeful:           0xffcc44,  // âmbar dourado — esperançoso
+        guiding_light:     0xffffaa,  // amarelo pálido — luz guia
+        shielded:          0x88ccff,  // azul claro — escudado
+        freedom_of_movement: 0x00ffcc, // verde água — livre
+    }
+
+    for (const key of activePositive) {
+        if (colorMap[key]) return colorMap[key]
+    }
+
+    return 0xd4a34d // dourado padrão
 }
 
 // ─────────────────────────────────────────────

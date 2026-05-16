@@ -95,7 +95,7 @@
                         </div>
                     </div>
 
-                    <div class="view-control-label" style="margin: 8px;">Fase do Dia</div>
+                    <div class="view-control-label" style="margin: 8px;">Ciclo Solar</div>
                     <div class="day-phase-control"> <button
                             class="day-phase-btn active"
                             id="btn-phase-day"
@@ -128,7 +128,7 @@
                     
                     </div> <div class="panel-divider"></div>
 
-                    <div class="panel-section-label" style="margin-top: 8px;">Clima</div>
+                    <div class="view-control-label" style="margin: 8px;">Manifestações Climáticas</div>
                     <div class="weather-control">
                     
                         <button class="weather-btn active" data-weather="clear" onclick="setWeather('clear')" title="Limpo">
@@ -174,12 +174,26 @@
                         </div>
                     </div>
                     
-                    <div class="panel-section-label">Notas da Sessão</div>
-                    <textarea class="character-menu-input full-width" style="height: 150px; resize: none; border-radius: 8px; background: rgba(0,0,0,0.2);" placeholder="Anotações do mestre..."></textarea>
-                    
-                    <button class="combat-start-btn" style="margin-top: 10px; border-color: #6e6557; color: #6e6557;">
-                        <i data-lucide="save"></i> Salvar Log da Sessão
-                    </button>
+                    <div class="panel-divider"></div>
+
+                    <div class="panel-section-label">Grimório do Narrador</div>
+                    <div class="notes-mode-toggle">
+                        <button class="notes-mode-btn active" id="btn-notes-edit" onclick="setNotesMode('edit')">✏ Editar</button>
+                        <button class="notes-mode-btn" id="btn-notes-preview" onclick="setNotesMode('preview')">👁 Preview</button>
+                    </div>
+                    <textarea
+                        id="session-notes-textarea"
+                        class="character-menu-input full-width session-notes"
+                        placeholder="**Negrito**, *itálico*, # Título, ## Subtítulo, - Lista, > Citação"
+                        oninput="saveSessionNotes()"
+                    ></textarea>
+                    <div id="session-notes-preview" class="notes-preview" style="display:none;"></div>
+                    <div class="notes-status-bar">
+                        <span id="notes-save-indicator" class="notes-saved">✓ Salvo</span>
+                        <button class="combat-start-btn" style="margin-top:4px;font-size:11px;padding:8px;" onclick="exportSessionNotes()">
+                            <i data-lucide="save"></i> Exportar .txt
+                        </button>
+                    </div>
                 </div>
                 <div id="tab-campanha" class="tab-content">
                     <div class="panel-section-label">Páginas de Cenário</div>
