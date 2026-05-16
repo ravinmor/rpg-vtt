@@ -67,6 +67,19 @@
                             <button class="combat-btn primary" onclick="nextTurn()">▶ Próximo</button>
                         </div>
                     </div>
+                    
+                    <div class="panel-divider"></div>
+                    
+                    <div class="view-control-label">Personagem Selecionado</div>
+                    <div class="entity-item" style="cursor: default; background: rgba(212, 163, 77, 0.05); border-color: #d4a34d66;">
+                        <div class="entity-avatar" id="side-char-avatar" style="background: #d4a34d;">?</div>
+                        <div class="entity-info">
+                            <span class="entity-name" id="side-character-name">Nenhum selecionado</span>
+                            <div id="side-character-statuses" class="side-char-statuses"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="panel-divider"></div>
 
                     <div class="panel-section-label">Bestiário</div>
                     <div class="panel-select-group">
@@ -162,21 +175,9 @@
                         </button>
                     
                     </div>
-                    
-                    <div class="panel-divider"></div>
-                    
-                    <div class="view-control-label">Personagem Selecionado</div>
-                    <div class="entity-item" style="cursor: default; background: rgba(212, 163, 77, 0.05); border-color: #d4a34d66;">
-                        <div class="entity-avatar" id="side-char-avatar" style="background: #d4a34d;">?</div>
-                        <div class="entity-info">
-                            <span class="entity-name" id="side-character-name">Nenhum selecionado</span>
-                            <div id="side-character-statuses" class="side-char-statuses"></div>
-                        </div>
-                    </div>
-                    
                     <div class="panel-divider"></div>
 
-                    <div class="panel-section-label">Grimório do Narrador</div>
+                    <div class="view-control-label">Grimório do Narrador</div>
                     <div class="notes-mode-toggle">
                         <button class="notes-mode-btn active" id="btn-notes-edit" onclick="setNotesMode('edit')">✏ Editar</button>
                         <button class="notes-mode-btn" id="btn-notes-preview" onclick="setNotesMode('preview')">👁 Preview</button>
