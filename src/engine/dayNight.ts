@@ -54,7 +54,7 @@ const PHASES: Record<DayPhase, PhaseConfig> = {
             0,     0,     0,     1,  0,
         ] as any,
         overlayColor: 0x001030,
-        overlayAlpha: 0.12,
+        overlayAlpha: 0.42,
         label: 'Noite',
     },
 }
