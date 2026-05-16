@@ -14,6 +14,7 @@ import { initScene, app, viewport } from './engine/scene';
 import { gizmo } from './engine/transformGizmo';
 import { loadStatusIcons } from './utils/images';
 import { createIcons, Map, Users, BookOpen, MousePointer2, Square, Circle, Triangle, Type, Grid3X3, Trash2, Sparkle, Brush, Hash, Copy, WandSparkles, Eye, EyeOff, Lock, Unlock, ChevronLeft, X, PenTool } from 'lucide';
+import { drawPenPreview, resetPen } from './engine/penTool';
 
 // ======================================================
 // CANVAS E CONTEXTO
@@ -402,28 +403,40 @@ function toggleGrid() {
 // FERRAMENTAS
 // ======================================================
 function setTool(toolName: string) {
-    state.currentDrawMode = toolName;
-
-    // Remove active só dos botões de ferramenta, não do grid
-    document.querySelectorAll('.tool-btn:not(.grid-toggle-btn)').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.getElementById(`btn-tool-${toolName}`) || document.getElementById(`tool-${toolName}`);
-    activeBtn?.classList.add('active');
-
-    state.editingZone        = null;
-    state.selectedCharacter  = null;
-    state.isDrawingCircle    = false;
-    state.isDrawingShape     = false;
-    state.gesturePoints      = [];
-    state.mouseDownTarget    = null;
-    state.mouseDownPoint     = null;
-    state.potentialZone      = null;
-    state.isDraggingToken    = false;
-    state.isDraggingZone     = false;
-    state.isResizing         = false;
-
-    closeCharacterMenu();
-    if (menu) menu.style.display = 'none';
-    updateCharacterPanels();
+    // Ao sair da caneta, limpa rascunhos que não receberam efeito
+    // (mas só se o usuário não os selecionou depois — editingZone aponta para eles)
+    if (state.currentDrawMode === 'pen' && toolName !== 'pen') {
+        state.activeZones = state.activeZones.filter((z: any) =>
+            !z.isDraft || z === state.editingZone
+        )
+        resetPen()
+    }
+ 
+    state.currentDrawMode = toolName
+ 
+    document.querySelectorAll('.tool-btn:not(.grid-toggle-btn)').forEach(btn => btn.classList.remove('active'))
+    const activeBtn = document.getElementById(`btn-tool-${toolName}`) || document.getElementById(`tool-${toolName}`)
+    activeBtn?.classList.add('active')
+ 
+    state.editingZone        = null
+    state.selectedCharacter  = null
+    state.isDrawingCircle    = false
+    state.isDrawingShape     = false
+    state.gesturePoints      = []
+    state.mouseDownTarget    = null
+    state.mouseDownPoint     = null
+    state.potentialZone      = null
+    state.isDraggingToken    = false
+    state.isDraggingZone     = false
+    state.isResizing         = false
+ 
+    closeCharacterMenu()
+    if (menu) menu.style.display = 'none'
+    updateCharacterPanels()
+ 
+    if (typeof (window as any).renderLayersList === 'function') {
+        ;(window as any).renderLayersList()
+    }
 }
 
 // ======================================================
@@ -792,6 +805,7 @@ async function bootstrap() {
         syncEffects(state.activeZones, state.editingZone)
         syncTokens(characters, state.tokenScale, state.selectedCharacter?.id, state.concentrationPulse)
         syncUI(state)
+        drawPenPreview();
         gizmo.tick()
     })
     syncEffects(state.activeZones, state.editingZone);

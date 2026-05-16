@@ -3,6 +3,19 @@ import { menuDatabase } from "../data/menu";
 import { spellDatabase } from "../data/spells";
 import { generateShapePath, isPointInPolygon } from "../utils/math";
 import { gizmo } from '../engine/transformGizmo';
+import {
+    penState,
+    resetPen,
+    addAnchor,
+    buildFinalPath,
+    isNearFirstAnchor,
+    initPenPreview,
+    drawPenPreview,
+} from '../engine/penTool'
+import { subLayerAreas } from '../engine/scene'
+
+let penMouseDown  = false   // true durante o arraste de handle
+let penDownPoint  = { x: 0, y: 0 }  // posição do mousedown para detectar arrastar
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TEXTO INLINE
@@ -104,6 +117,7 @@ function selectZone(zone: any, mx: number, my: number, state: any) {
 // INIT
 // ─────────────────────────────────────────────────────────────────────────────
 export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, state: any, tools: any) {
+    initPenPreview(subLayerAreas)
 
     // ── MOUSEDOWN ────────────────────────────────────────────────────────────
     window.addEventListener('mousedown', (e: MouseEvent) => {
@@ -186,19 +200,35 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
         }
 
         // ── MODOS DE DESENHO ─────────────────────────────────────────────────
+        if (state.currentDrawMode === 'pen') {
+            penMouseDown = true
+            penDownPoint = { x: mx, y: my }
+ 
+            // Fechar caminho ao clicar perto do primeiro ponto
+            if (isNearFirstAnchor(mx, my)) {
+                closePenPath(state, tools)
+                return
+            }
+ 
+            addAnchor(mx, my)
+            penState.active = true
+            return
+        }
+ 
+        // ── TEXTO ─────────────────────────────────────────────────────────────
         if (state.currentDrawMode === 'text') {
-            spawnTextInput(e.clientX, e.clientY, mx, my, state);
-            return;
+            spawnTextInput(e.clientX, e.clientY, mx, my, state)
+            return
         }
         if (state.currentDrawMode === 'spell_object') {
-            state.pendingSpellPoint = { x: mx, y: my };
+            state.pendingSpellPoint = { x: mx, y: my }
         } else if (state.currentDrawMode === 'brush') {
-            state.isDrawingCircle = true;
-            state.gesturePoints   = [{ x: mx, y: my }];
+            state.isDrawingCircle = true
+            state.gesturePoints   = [{ x: mx, y: my }]
         } else {
-            state.isDrawingShape = true;
-            state.shapeStart     = { x: mx, y: my };
-            state.shapeEnd       = { x: mx, y: my };
+            state.isDrawingShape = true
+            state.shapeStart     = { x: mx, y: my }
+            state.shapeEnd       = { x: mx, y: my }
         }
     });
 
@@ -224,6 +254,23 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
         const coords = tools.getMapCoords(e);
         const mx = coords.x;
         const my = coords.y;
+
+        if (state.currentDrawMode === 'pen' && penState.active) {
+            penState.previewPoint = { x: mx, y: my }
+ 
+            // Arrastar cria handle de Bézier no último ponto
+            if (penMouseDown && penState.anchors.length > 0) {
+                const moved = Math.hypot(mx - penDownPoint.x, my - penDownPoint.y) > 5
+                if (moved) {
+                    const last = penState.anchors[penState.anchors.length - 1]
+                    // cpOut aponta para onde o mouse foi
+                    last.cpOut = { x: mx, y: my }
+                    // cpIn é o espelho (handle suave)
+                    last.cpIn  = { x: 2 * last.x - mx, y: 2 * last.y - my }
+                }
+            }
+            return
+        }
 
         if (state.isDraggingToken && state.selectedCharacter) {
             if (state.tokenDragStart && Math.hypot(mx - state.tokenDragStart.x, my - state.tokenDragStart.y) > 4) {
@@ -337,6 +384,12 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
             return;
         }
 
+        if (state.currentDrawMode === 'pen') {
+            penMouseDown = false
+            return
+        }
+ 
+
         if (state.currentDrawMode === 'spell_object' && state.pendingSpellPoint) {
             state.currentMenuStack = [spellDatabase];
             tools.renderEffectMenu();
@@ -382,11 +435,73 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
             if (state.menu) state.menu.style.display = 'none';
             gizmo.detach();
         }
+
+        if (e.key === 'Enter' && state.currentDrawMode === 'pen' && penState.anchors.length >= 3) {
+            closePenPath(state, tools)
+        }
+        
+        if (e.key === 'Escape' && state.currentDrawMode === 'pen') {
+            resetPen()
+        }
     });
+
+    window.addEventListener('dblclick', (e: MouseEvent) => {
+        if ((e.target as HTMLElement).tagName !== 'CANVAS') return
+        if (state.currentDrawMode !== 'pen') return
+        if (penState.anchors.length < 3) return
+ 
+        // Remove o ponto duplicado que o último clique adicionou
+        penState.anchors.pop()
+        closePenPath(state, tools)
+    })
 
     window.addEventListener('DOMContentLoaded', () => {
         if (typeof (window as any).setTool === 'function') (window as any).setTool('select');
     });
+}
+
+function closePenPath(state: any, tools: any, clientX?: number, clientY?: number) {
+    if (penState.anchors.length < 3) {
+        resetPen()
+        return
+    }
+ 
+    const path = buildFinalPath(true)
+ 
+    // Cria a zona rascunho IMEDIATAMENTE em activeZones
+    // Assim ela já é clicável/selecionável mesmo se o menu for fechado
+    const draftId = `zone_pen_${Date.now()}_${Math.random()}`
+    const draftZone: any = {
+        id:       draftId,
+        type:     'brush',
+        name:     'Nova Área',
+        category: 'Caneta',
+        path:     path,
+        color:    'rgba(200, 134, 10, 0.2)',
+        opacity:  0.2,
+        visible:  true,
+        locked:   false,
+        isDraft:  true,
+    }
+    state.activeZones.push(draftZone)
+ 
+    // Aponta editingZone para o rascunho — setEffect() fará Object.assign nela
+    state.editingZone    = draftZone
+    state.lastCirclePath = path
+ 
+    state.currentMenuStack = [menuDatabase]
+    tools.renderEffectMenu()
+    tools.showMenu(
+        clientX ?? window.innerWidth  / 2,
+        clientY ?? window.innerHeight / 2,
+        true  // isEditing = true → mostra botão "Remover"
+    )
+ 
+    if (typeof (window as any).renderLayersList === 'function') {
+        ;(window as any).renderLayersList()
+    }
+ 
+    resetPen()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

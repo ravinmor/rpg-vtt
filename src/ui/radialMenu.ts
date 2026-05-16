@@ -84,19 +84,20 @@ export function setEffect(item: any, e: any) {
     if (state.editingZone) {
         Object.assign(state.editingZone, {
             type:      zoneData.type,
+            name:      zoneData.name,
             videoPath: zoneData.videoPath,
             imagePath: zoneData.imagePath,
             color:     zoneData.color,
             opacity:   zoneData.opacity,
             particles: zoneData.particles,
-            // Limpa campos legados do canvas antigo
-            video:   null,
-            image:   null,
-            pattern: null,
-        });
-        state.editingZone = null;
+            video:     null,
+            image:     null,
+            pattern:   null,
+            isDraft:   false,   // ← remove a flag de rascunho
+        })
+        state.editingZone = null
     } else if (state.lastCirclePath.length > 0) {
-        state.activeZones.push(zoneData);
+        state.activeZones.push(zoneData)
     }
 
     if (typeof w.setTool === 'function') {
@@ -174,16 +175,21 @@ export function showMenu(x: number, y: number, isEditing = false) {
 }
 
 export function closeMenu(e: any) {
-    if (e) e.stopPropagation();
-    if (state.menu) state.menu.style.display = 'none';
-    state.menuOpen        = false;
-    state.isDrawingCircle = false;
-    state.isDrawingShape  = false;
-    state.gesturePoints   = [];
-    state.pendingMenuPoint   = null;
-    state.intersectionPoint  = null;
-    state.lastCirclePath     = [];
-    state.editingZone        = null;
+    if (e) e.stopPropagation()
+    if (state.menu) state.menu.style.display = 'none'
+    state.menuOpen        = false
+    state.isDrawingCircle = false
+    state.isDrawingShape  = false
+    state.gesturePoints   = []
+    state.pendingMenuPoint   = null
+    state.intersectionPoint  = null
+    state.lastCirclePath     = []
+ 
+    // Só limpa editingZone se NÃO for um rascunho
+    // Rascunhos precisam manter a referência para que o clique posterior funcione
+    if (!state.editingZone?.isDraft) {
+        state.editingZone = null
+    }
 }
 
 export function renderEffectMenu() {
@@ -225,8 +231,8 @@ export function renderEffectMenu() {
                     setEffect(item, e);
                 }
                 closeMenu(null);
-                if (typeof (window as any).setTool === 'function') {
-                    (window as any).setTool('select');
+                if (typeof w.setTool === 'function') {
+                    w.setTool('select');
                 }
             };
         }
@@ -235,11 +241,13 @@ export function renderEffectMenu() {
 }
 
 export function updateExistingEffect(zone: any, newItem: any) {
+    zone.name      = newItem.label;
     zone.type      = newItem.id;
     zone.videoPath = newItem.videoPath || null;
     zone.imagePath = newItem.imagePath || null;
     zone.color     = newItem.color     || null;
     zone.opacity   = newItem.opacity   ?? null;
+    zone.isDraft   = false 
     // Limpa legados do canvas antigo
     zone.video   = null;
     zone.image   = null;
@@ -249,7 +257,12 @@ export function updateExistingEffect(zone: any, newItem: any) {
         zone.rotateSpeed = newItem.rotateSpeed || 0;
         zone.fade        = newItem.fade !== undefined ? newItem.fade : false;
     }
+
+    if (typeof w.renderLayersList === 'function') {
+        ;w.renderLayersList()
+    }
 }
+
 
 export function menuGoBack(e: any) {
     if (e) e.stopPropagation();
