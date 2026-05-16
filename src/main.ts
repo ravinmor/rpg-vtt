@@ -13,13 +13,14 @@ import { loadFromLocalStorage } from './state/gameState';
 import { initScene, app, viewport, subLayerAreas, layerPings } from './engine/scene';
 import { gizmo } from './engine/transformGizmo';
 import { loadStatusIcons } from './utils/images';
-import { createIcons, Map, Users, BookOpen, MousePointer2, Square, Circle, Triangle, Type, Grid3X3, Trash2, Sparkle, Brush, Hash, Copy, WandSparkles, Eye, EyeOff, Lock, Unlock, ChevronLeft, X, PenTool, Ruler, Target, Crosshair, Sun, Sunset, Moon, Cloud, CloudRain, CloudLightning, Snowflake, Wind, CloudSnow, Blend, ThermometerSun, ThermometerSnowflake, Tornado, CloudFog, Flame, BrickWallFire } from 'lucide';
+import { createIcons, Map, Users, BookOpen, MousePointer2, Square, Circle, Triangle, Type, Grid3X3, Trash2, Sparkle, Brush, Hash, Copy, WandSparkles, Eye, EyeOff, Lock, Unlock, ChevronLeft, X, PenTool, Ruler, Target, Crosshair, Sun, Sunset, Moon, Cloud, CloudRain, CloudLightning, Snowflake, Wind, CloudSnow, Blend, ThermometerSun, ThermometerSnowflake, Tornado, CloudFog, Flame, BrickWallFire, Eraser } from 'lucide';
 import { drawPenPreview, resetPen } from './engine/penTool';
 import { drawRuler, resetRuler } from './engine/rulerTool'
 import { drawPings, resetPings } from './engine/pingTool';
 import { initDayNight, setDayPhase, tickDayNight } from './engine/dayNight'
 import { initWeather, setWeather, tickWeather } from './engine/weatherSystem'
 import { positiveStatuses } from './data/positiveStatus';
+import { clearFog, isFogActive, loadFog, toggleFog } from './engine/fogOfWar';
 
 // ======================================================
 // CANVAS E CONTEXTO
@@ -503,7 +504,8 @@ const updateIcons = () => {
             Tornado,
             CloudFog,
             Flame,
-            BrickWallFire
+            BrickWallFire,
+            Eraser
         }
     });
 };
@@ -943,13 +945,24 @@ w.toggleLayerLock = (id: string, e: MouseEvent) => {
     if (zone) zone.locked = !zone.locked;
     renderLayersList();
 };
+w.toggleFogMode = () => {
+    const next = !isFogActive()
+    toggleFog(next)
+    import('./engine/fogOfWar').then(m => m.saveFog())
+}
+w.startFogDraw = () => {
+    state.fogMode = true
+    setTool('pen')
+}
+w.clearFogArea = () => clearFog()
 
 async function bootstrap() {
     await initScene(canvas);
-    await loadStatusIcons()
-    loadSessionNotes()
-    initDayNight()
-    initWeather()
+    loadFog();
+    await loadStatusIcons();
+    loadSessionNotes();
+    initDayNight();
+    initWeather();
 
     window.addEventListener('pointerdown', () => {
         console.log("Interação detectada, vídeos destravados.");

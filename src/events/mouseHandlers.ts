@@ -23,6 +23,16 @@ import {
     resetPings,
     drawPings
 } from '../engine/pingTool';
+import {
+    initFog,
+    toggleFog,
+    eraseAt,
+    drawEraserCursor,
+    setFogPolygon,
+    hasPolygon,
+    isFogActive,
+    ERASER_RADIUS,
+} from '../engine/fogOfWar'
 
 import { subLayerAreas } from '../engine/scene'
 
@@ -130,6 +140,7 @@ function selectZone(zone: any, mx: number, my: number, state: any) {
 // ─────────────────────────────────────────────────────────────────────────────
 export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, state: any, tools: any) {
     initPenPreview(subLayerAreas)
+    initFog();
     initRuler(subLayerAreas)
 
     // ── MOUSEDOWN ────────────────────────────────────────────────────────────
@@ -146,6 +157,12 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
         const my = coords.y;
         state.mouseDownPoint = coords;
 
+        if (state.currentDrawMode === 'fog_eraser') {
+            eraseAt(mx, my)                   // ← mx, my (coords do mundo)
+            state.isFogErasing = true
+            return
+        }
+        
         if (state.currentDrawMode === 'select') {
 
             // 1. Gizmo (Handles de redimensionamento/rotação)
@@ -307,6 +324,19 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
             return
         }
 
+        if (state.currentDrawMode === 'fog_eraser') {
+            drawEraserCursor(mx, my, true)    // ← mx, my (coords do mundo)
+            if (state.isFogErasing && e.buttons === 1) {
+                eraseAt(mx, my)               // ← mx, my (coords do mundo)
+            }
+            return
+        }
+
+        // Esconde cursor quando sai do modo
+        if (state.currentDrawMode !== 'fog_eraser') {
+            drawEraserCursor(0, 0, false)
+        }
+
         if (state.currentDrawMode === 'ruler' && rulerState.active) {
             rulerState.previewPoint = { x: mx, y: my }
             return
@@ -422,6 +452,13 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
             state.tokenDragStart = null;
             state.tokenHasMoved  = false;
             return;
+        }
+
+        if (state.isFogErasing) {
+            state.isFogErasing = false
+            // importar saveFog
+            import('../engine/fogOfWar').then(m => m.saveFog())
+            return
         }
 
         if (state.currentDrawMode === 'pen') {
@@ -576,6 +613,17 @@ function closePenPath(state: any, tools: any, clientX?: number, clientY?: number
     }
  
     const path = buildFinalPath(true)
+
+    if (state.fogMode) {
+        setFogPolygon(path)
+        import('../engine/fogOfWar').then(m => m.saveFog())
+        state.fogMode = false
+        resetPen()
+        if (typeof (window as any).setTool === 'function') {
+            (window as any).setTool('select')
+        }
+        return
+    }
  
     // Cria a zona rascunho IMEDIATAMENTE em activeZones
     // Assim ela já é clicável/selecionável mesmo se o menu for fechado

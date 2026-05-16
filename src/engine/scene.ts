@@ -2,13 +2,22 @@ import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 import { initGizmo } from './transformGizmo'
 
-export let app: PIXI.Application
-export let viewport: Viewport
+export let app:            PIXI.Application
+export let viewport:       Viewport
 
-export let layerEffects: PIXI.Container
-export let layerGrid:    PIXI.Graphics
-export let layerTokens:  PIXI.Container
-export let layerUI:      PIXI.Container
+export let layerEffects:   PIXI.Container
+export let layerGrid:      PIXI.Graphics
+export let layerTokens:    PIXI.Container
+export let layerUI:        PIXI.Container
+export let layerFog:       PIXI.Container
+layerFog = new PIXI.Container()
+layerFog.label     = 'layer-fog'
+layerFog.eventMode = 'none'
+layerFog.visible   = false
+
+const emptyFilter = new PIXI.AlphaFilter()
+emptyFilter.alpha  = 1
+layerFog.filters   = [emptyFilter]
 
 export let subLayerAreas:  PIXI.Container
 export let subLayerSpells: PIXI.Container
@@ -28,6 +37,7 @@ export async function initScene(canvas: HTMLCanvasElement) {
         antialias:       true,
         resolution:      window.devicePixelRatio || 1,
         autoDensity:     true,
+        premultipliedAlpha: true,
     })
 
     viewport = new Viewport({
@@ -44,37 +54,38 @@ export async function initScene(canvas: HTMLCanvasElement) {
         .wheel()
         .decelerate()
 
-    app.stage.addChild(viewport)
+    // Camadas do viewport (mundo — sofrem pan/zoom)
+    layerEffects       = new PIXI.Container()
+    layerGrid          = new PIXI.Graphics()
+    layerTokens        = new PIXI.Container()
+    layerUI            = new PIXI.Container()
+    layerFog           = new PIXI.Container()
+    layerFog.label     = 'layer-fog'
+    layerFog.eventMode = 'none'
+    layerFog.visible   = false
 
-    layerEffects = new PIXI.Container()
-    layerGrid    = new PIXI.Graphics()
-    layerTokens  = new PIXI.Container()
-    layerUI      = new PIXI.Container()
-
-    // 1. Camadas base do mapa e tokens entram primeiro (ficam atrás)
     viewport.addChild(layerEffects)
-    viewport.addChild(layerGrid)
+    viewport.addChild(layerGrid)  // 1º — mapa e tokens
+    viewport.addChild(layerFog)
     viewport.addChild(layerTokens)
     viewport.addChild(layerUI)
-
-    // 2. ADICIONE A LAYER DE PINGS NO TOPO DO VIEWPORT AQUI!
-    // Como ela é adicionada por último no viewport, nada dentro do mapa pode cobri-la
     viewport.addChild(layerPings)
 
     subLayerAreas  = new PIXI.Container()
     subLayerSpells = new PIXI.Container()
 
-    // REMOVIDO: subLayerAreas.addChild(layerPings); <-- Tira daqui!
-    
     layerEffects.addChild(subLayerAreas)
     layerEffects.addChild(subLayerSpells)
-    
+
     subLayerAreas.eventMode  = 'none'
     subLayerSpells.eventMode = 'static'
     layerTokens.eventMode    = 'static'
-    
-    // Garante que a camada de pings também ignore cliques para não travar o mapa embaixo dela
     layerPings.eventMode     = 'none'
+
+    // Fog — fica no app.stage em coordenadas de TELA (não sofre pan/zoom)
+    // Adicionada APÓS o viewport para ficar por cima
+
+    app.stage.addChild(viewport)       // 2º — fog por cima do mapa, em coords de tela
 
     w.app      = app
     w.viewport = viewport

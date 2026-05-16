@@ -2114,3 +2114,69 @@ textarea.character-menu-input {
     box-shadow: 0 0 10px rgba(64, 160, 96, 0.4), inset 0 0 5px rgba(100,255,150,0.1);
     text-shadow: 0 0 5px rgba(0,0,0,0.8);
 }
+
+/* Fog of War controls */
+.fog-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.fog-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 12px;
+    background: linear-gradient(135deg, var(--color-btn-bg-start), var(--color-btn-bg-end));
+    border: 1px solid var(--color-select-border);
+    border-radius: 4px;
+    color: var(--color-btn-label);
+    font-family: 'Cinzel', serif;
+    font-size: var(--text-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.fog-toggle-btn:hover {
+    border-color: var(--color-btn-hover-border);
+    color: var(--color-btn-label-hover);
+}
+.fog-toggle-btn.active {
+    background: linear-gradient(135deg, #0a1a2a, #051020);
+    border-color: #4a90d9;
+    color: #a0c8ff;
+    box-shadow: 0 0 12px rgba(74,144,217,0.3);
+}
+
+.fog-draw-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 12px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--color-ornament-dark);
+    border-radius: 4px;
+    color: var(--color-subtitle);
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.fog-draw-btn:hover {
+    border-color: var(--color-btn-hover-border);
+    color: var(--color-btn-label-hover);
+}
+.fog-draw-btn.danger {
+    border-color: var(--color-danger-border);
+    color: var(--color-danger-label);
+}
+.fog-draw-btn.danger:hover {
+    background: rgba(138,40,24,0.2);
+    border-color: var(--color-danger-hover-border);
+    color: var(--color-danger-label-hover);
+}

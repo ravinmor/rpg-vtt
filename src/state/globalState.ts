@@ -34,6 +34,8 @@ export const state = {
     mouseDownPoint: null as any,
     currentMenuStack: [menuDatabase],
     potentialZone: null as any,
+    fogMode: false as boolean,       // mestre está desenhando a área de fog com a pen
+    fogErasing: false as boolean,
     // Capturamos os elementos DOM que o mouse precisa
     sideMenu: document.getElementById('side-menu'),
     characterMenu: document.getElementById('character-menu'),

@@ -108,6 +108,22 @@
                         </div>
                     </div>
 
+                    <div class="view-control-label" style="margin: 8px;">Neblina de Guerra</div>
+                    <div class="fog-controls">
+                        <button class="fog-toggle-btn" id="btn-fog" onclick="toggleFogMode()">
+                            <i data-lucide="cloud-fog"></i>
+                            <span>Fog of War</span>
+                        </button>
+                        <button class="fog-draw-btn" id="btn-fog-draw" onclick="startFogDraw()" title="Desenhar área com a pen">
+                            <i data-lucide="pen-tool"></i>
+                            <span>Definir Área</span>
+                        </button>
+                        <button class="fog-draw-btn danger" id="btn-fog-clear" onclick="clearFogArea()" title="Apagar fog inteira">
+                            <i data-lucide="trash-2"></i>
+                            <span>Limpar</span>
+                        </button>
+                    </div>
+
                     <div class="view-control-label" style="margin: 8px;">Ciclo Solar</div>
                     <div class="day-phase-control"> <button
                             class="day-phase-btn active"
@@ -443,6 +459,9 @@
                 </button>
                 <button class="tool-btn" id="btn-tool-ping" onclick="window.setTool('ping')" title="Sinalizar Área (P)">
                     <i data-lucide="crosshair"></i>
+                </button>
+                <button class="tool-btn" id="btn-tool-fog_eraser" onclick="setTool('fog_eraser')" title="Borracha de Fog">
+                    <span class="tool-icon"><i data-lucide="eraser"></i></span>
                 </button>
             </div>
 
