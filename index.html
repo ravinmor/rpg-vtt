@@ -28,35 +28,35 @@
             <div class="panel-tabs">
                 <button class="tab-btn active" onclick="switchTab('cena')">
                     <span class="tab-icon"><i data-lucide="copy"></i></span>
-                    <span class="tab-label">Cena</span>
+                    <span class="tab-label">Stage</span>
                 </button>
                 <button class="tab-btn" onclick="switchTab('entidades')">
                     <span class="tab-icon"><i data-lucide="users"></i></span>
-                    <span class="tab-label">Entidades</span>
+                    <span class="tab-label">Entities</span>
                 </button>
                 <button class="tab-btn" onclick="switchTab('sessao')">
                     <span class="tab-icon"><i data-lucide="wand-sparkles"></i></span>
-                    <span class="tab-label">Sessão</span>
+                    <span class="tab-label">Session</span>
                 </button>
                 <button class="tab-btn" onclick="switchTab('campanha')">
                     <span class="tab-icon"><i data-lucide="book-open"></i></span>
-                    <span class="tab-label">Campanha</span>
+                    <span class="tab-label">Chronicles</span>
                 </button>
             </div>
 
             <div class="panel-scroll">
                 <div id="tab-cena" class="tab-content active">
-                    <div class="panel-section-label">Efeitos individuais e magias</div>
+                    <div class="view-control-label" style="margin: 8px;">Efeitos individuais e magias</div>
                     <div id="spells-list" class="layers-container"></div>
 
                     <div class="panel-divider"></div>
 
-                    <div class="panel-section-label">Rituais de campo</div>
+                    <div class="view-control-label" style="margin: 8px;">Rituais de campo</div>
                     <div id="layers-list" class="layers-container"></div>
                 </div>
 
                 <div id="tab-entidades" class="tab-content">
-                    <div class="panel-section-label">Ordem de Combate</div>
+                    <div class="view-control-label" style="margin: 8px;">Ordem de Combate</div>
                     <div id="initiative-container" class="side-status-card">
                         <div id="initiative-list">
                             </div>
@@ -81,7 +81,7 @@
                     
                     <div class="panel-divider"></div>
 
-                    <div class="panel-section-label">Bestiário</div>
+                    <div class="view-control-label" style="margin: 8px;">Bestiário</div>
                     <div class="panel-select-group">
                         <div class="panel-select-wrap">
                             <select id="monster-select" class="panel-select">
@@ -197,7 +197,7 @@
                     </div>
                 </div>
                 <div id="tab-campanha" class="tab-content">
-                    <div class="panel-section-label">Páginas de Cenário</div>
+                    <div class="view-control-label" style="margin: 8px;">Páginas de Cenário</div>
                     
                     <div class="scene-item current">
                         <div class="entity-avatar" style="background: #3d352a;"><i data-lucide="map-pin" style="width:14px;"></i></div>

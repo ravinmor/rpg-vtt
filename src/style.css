@@ -1376,7 +1376,8 @@ textarea.character-menu-input {
 
 .tab-label {
     font-family: 'Cinzel', serif;
-    font-size: 9px;
+    font-size: 10px;
+    font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
