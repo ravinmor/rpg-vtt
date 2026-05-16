@@ -10,12 +10,13 @@ import { state } from './state/globalState';
 import * as RadialMenu from './ui/radialMenu';
 import * as BestiaryUI from './ui/bestiaryUI';
 import { loadFromLocalStorage } from './state/gameState';
-import { initScene, app, viewport } from './engine/scene';
+import { initScene, app, viewport, subLayerAreas, layerPings } from './engine/scene';
 import { gizmo } from './engine/transformGizmo';
 import { loadStatusIcons } from './utils/images';
-import { createIcons, Map, Users, BookOpen, MousePointer2, Square, Circle, Triangle, Type, Grid3X3, Trash2, Sparkle, Brush, Hash, Copy, WandSparkles, Eye, EyeOff, Lock, Unlock, ChevronLeft, X, PenTool, Ruler } from 'lucide';
+import { createIcons, Map, Users, BookOpen, MousePointer2, Square, Circle, Triangle, Type, Grid3X3, Trash2, Sparkle, Brush, Hash, Copy, WandSparkles, Eye, EyeOff, Lock, Unlock, ChevronLeft, X, PenTool, Ruler, Target, Crosshair } from 'lucide';
 import { drawPenPreview, resetPen } from './engine/penTool';
 import { drawRuler, resetRuler } from './engine/rulerTool'
+import { drawPings, resetPings } from './engine/pingTool';
 
 // ======================================================
 // CANVAS E CONTEXTO
@@ -391,7 +392,8 @@ const updateIcons = () => {
             Lock,
             Unlock,
             PenTool,
-            Ruler
+            Ruler,
+            Crosshair
         }
     });
 };
@@ -405,43 +407,53 @@ function toggleGrid() {
 // FERRAMENTAS
 // ======================================================
 function setTool(toolName: string) {
-    // Ao sair da caneta, limpa rascunhos que não receberam efeito
-    // (mas só se o usuário não os selecionou depois — editingZone aponta para eles)
+    // 1. Reseta a Régua se mudou para outra ferramenta
     if (toolName !== 'ruler') {
-        resetRuler()
+        resetRuler();
     }
 
+    // 2. Reseta os Pings se mudou para outra ferramenta
+    if (toolName !== 'ping') {
+        resetPings();
+    }
+
+    // 3. Ao sair da caneta, limpa rascunhos que não receberam efeito
     if (state.currentDrawMode === 'pen' && toolName !== 'pen') {
         state.activeZones = state.activeZones.filter((z: any) =>
             !z.isDraft || z === state.editingZone
-        )
-        resetPen()
+        );
+        resetPen();
     }
  
-    state.currentDrawMode = toolName
+    // 4. Atualiza o modo atual
+    state.currentDrawMode = toolName;
  
-    document.querySelectorAll('.tool-btn:not(.grid-toggle-btn)').forEach(btn => btn.classList.remove('active'))
-    const activeBtn = document.getElementById(`btn-tool-${toolName}`) || document.getElementById(`tool-${toolName}`)
-    activeBtn?.classList.add('active')
+    // 5. Gerenciamento visual dos botões (o seu já funciona perfeitamente aqui)
+    document.querySelectorAll('.tool-btn:not(.grid-toggle-btn)').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById(`btn-tool-${toolName}`) || document.getElementById(`tool-${toolName}`);
+    activeBtn?.classList.add('active');
  
-    state.editingZone        = null
-    state.selectedCharacter  = null
-    state.isDrawingCircle    = false
-    state.isDrawingShape     = false
-    state.gesturePoints      = []
-    state.mouseDownTarget    = null
-    state.mouseDownPoint     = null
-    state.potentialZone      = null
-    state.isDraggingToken    = false
-    state.isDraggingZone     = false
-    state.isResizing         = false
+    // 6. Reseta estados de seleção e desenho anteriores
+    state.editingZone        = null;
+    state.selectedCharacter  = null;
+    state.isDrawingCircle    = false;
+    state.isDrawingShape     = false;
+    state.gesturePoints      = [];
+    state.mouseDownTarget    = null;
+    state.mouseDownPoint     = null;
+    state.potentialZone      = null;
+    state.isDraggingToken    = false;
+    state.isDraggingZone     = false;
+    state.isResizing         = false;
  
-    closeCharacterMenu()
-    if (menu) menu.style.display = 'none'
-    updateCharacterPanels()
+    // 7. Fecha menus e atualiza painéis da UI lateral
+    closeCharacterMenu();
+    if (menu) menu.style.display = 'none';
+    updateCharacterPanels();
  
+    // 8. Atualiza o painel de camadas para refletir a remoção de rascunhos ou seleções
     if (typeof (window as any).renderLayersList === 'function') {
-        ;(window as any).renderLayersList()
+        (window as any).renderLayersList();
     }
 }
 
@@ -818,7 +830,8 @@ async function bootstrap() {
         syncUI(state)
         gizmo.tick()
         drawPenPreview();
-        drawRuler() 
+        drawRuler();
+        drawPings(layerPings);
     })
     syncEffects(state.activeZones, state.editingZone);
     renderInitiativeList();

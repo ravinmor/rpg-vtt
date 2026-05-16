@@ -12,6 +12,8 @@ export let layerUI:      PIXI.Container
 
 export let subLayerAreas:  PIXI.Container
 export let subLayerSpells: PIXI.Container
+export const layerPings = new PIXI.Graphics();
+layerPings.label = 'layer_pings';
 
 const w = (window as any)
 
@@ -49,23 +51,30 @@ export async function initScene(canvas: HTMLCanvasElement) {
     layerTokens  = new PIXI.Container()
     layerUI      = new PIXI.Container()
 
+    // 1. Camadas base do mapa e tokens entram primeiro (ficam atrás)
     viewport.addChild(layerEffects)
     viewport.addChild(layerGrid)
     viewport.addChild(layerTokens)
     viewport.addChild(layerUI)
 
+    // 2. ADICIONE A LAYER DE PINGS NO TOPO DO VIEWPORT AQUI!
+    // Como ela é adicionada por último no viewport, nada dentro do mapa pode cobri-la
+    viewport.addChild(layerPings)
+
     subLayerAreas  = new PIXI.Container()
     subLayerSpells = new PIXI.Container()
 
+    // REMOVIDO: subLayerAreas.addChild(layerPings); <-- Tira daqui!
+    
     layerEffects.addChild(subLayerAreas)
     layerEffects.addChild(subLayerSpells)
-
-    // Áreas nunca interceptam cliques — hit test é feito manualmente
-    // no mouseHandlers. Sem isso, uma textura criada depois bloqueia
-    // o clique em spells que estão visualmente na frente.
+    
     subLayerAreas.eventMode  = 'none'
     subLayerSpells.eventMode = 'static'
     layerTokens.eventMode    = 'static'
+    
+    // Garante que a camada de pings também ignore cliques para não travar o mapa embaixo dela
+    layerPings.eventMode     = 'none'
 
     w.app      = app
     w.viewport = viewport

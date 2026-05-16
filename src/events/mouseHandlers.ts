@@ -18,6 +18,11 @@ import {
     initRuler,
     drawRuler,
 } from '../engine/rulerTool'
+import {
+    pingState,
+    resetPings,
+    drawPings
+} from '../engine/pingTool';
 
 import { subLayerAreas } from '../engine/scene'
 
@@ -237,6 +242,12 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
             }
             rulerState.points.push({ x: mx, y: my })
             return
+        }
+
+        if (state.currentDrawMode === 'ping') {
+            // Cada clique adiciona um novo ponto de ping que ficará pulsando
+            pingState.points.push({ x: mx, y: my, timer: Math.random() * 5 });
+            return;
         }
  
         // ── TEXTO ─────────────────────────────────────────────────────────────
@@ -476,6 +487,20 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
                 (window as any).renderLayersList();
             }
         }
+        
+        if ((e.key === 'p' || e.key === 'P') && state.currentDrawMode !== 'ping') {
+            if (typeof (window as any).setTool === 'function') {
+                (window as any).setTool('ping');
+            }
+        }
+
+        // Se apertar Escape no modo ping permanente, limpa tudo e volta pro select
+        if (state.currentDrawMode === 'ping' && e.key === 'Escape') {
+            resetPings();
+            if (typeof (window as any).setTool === 'function') {
+                (window as any).setTool('select');
+            }
+        }
 
         if ((e.key === 'r' || e.key === 'R') && state.currentDrawMode !== 'ruler') {
             if (typeof (window as any).setTool === 'function') {
@@ -501,6 +526,13 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
     window.addEventListener('keyup', (e: KeyboardEvent) => {
         if ((document.activeElement as HTMLElement)?.tagName === 'INPUT' || 
             (document.activeElement as HTMLElement)?.tagName === 'TEXTAREA') return;
+
+        if ((e.key === 'p' || e.key === 'P') && state.currentDrawMode === 'ping') {
+            resetPings();
+            if (typeof (window as any).setTool === 'function') {
+                (window as any).setTool('select');
+            }
+        }
 
         if (e.key === 'r' || e.key === 'R') {
             // Não importa se tem pontos ou não: soltou o R, a régua some na hora!
