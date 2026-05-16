@@ -128,47 +128,46 @@ let weatherTime = 0
 let fogBlurFilter: PIXI.BlurFilter | null = null
 
 function scheduleLightning() {
-    // Próximo clarão entre 4 e 12 segundos (a 60fps)
-    lightningTimer = Math.floor(rand(240, 720))
+    lightningTimer = Math.floor(rand(120, 600))
 }
 
 function tickLightning() {
     if (currentWeather !== 'storm') {
         lightningAlpha    = 0
         lightningFlashing = false
+        applyLightningOverlay()
         return
     }
 
+    // Se estiver contando tempo para o próximo raio, apenas reduz o timer
     if (lightningTimer > 0) {
         lightningTimer--
+        
         if (lightningAlpha > 0) {
-            // Fade out do clarão
-            lightningAlpha = Math.max(0, lightningAlpha - 0.08)
+            lightningAlpha = Math.max(0, lightningAlpha - 0.15) // Fade acelerado para estalar a tela
             applyLightningOverlay()
         }
         return
     }
 
-    // Dispara o clarão
+    // Dispara a sequência do clarão (Acontece quando o timer zera)
     if (!lightningFlashing) {
         lightningFlashing = true
-        lightningAlpha    = rand(0.55, 0.85)
+        lightningAlpha    = rand(0.6, 0.9) // Clarão inicial forte
         applyLightningOverlay()
 
-        // Segundo flash rápido após ~80ms (5 frames)
+        // Segundo mini-flash rápido (Efeito estroboscópico de raio duplo)
         setTimeout(() => {
-            lightningAlpha = rand(0.3, 0.6)
+            lightningAlpha = rand(0.4, 0.7)
             applyLightningOverlay()
+            
+            // Apaga o estado de flash e agenda o próximo raio do loop
             setTimeout(() => {
-                lightningAlpha    = 0
                 lightningFlashing = false
-                applyLightningOverlay()
                 scheduleLightning()
-            }, 120)
-        }, 80)
+            }, 80)
+        }, 60)
     }
-
-    tickLightning()
 }
 
 function applyLightningOverlay() {
@@ -184,6 +183,14 @@ export function initWeather() {
     weatherLayer.eventMode = 'none'
     app.stage.addChild(weatherLayer)
 
+    lightningGfx = new PIXI.Graphics()
+    lightningGfx.label = 'weather-lightning'
+    lightningGfx.eventMode = 'none'
+    lightningGfx.alpha = 0
+    // Desenha um retângulo branco puro por padrão
+    lightningGfx.rect(0, 0, window.innerWidth, window.innerHeight).fill({ color: 0xffffff })
+    weatherLayer.addChild(lightningGfx)
+
     fogOverlay = new PIXI.Graphics()
     fogOverlay.label     = 'weather-fog'
     fogOverlay.eventMode = 'none'
@@ -194,12 +201,18 @@ export function initWeather() {
     particleGfx.eventMode = 'none'
     weatherLayer.addChild(particleGfx)
 
-    // CORRIGIDO: Salvamos na variável global para controlar dinamicamente depois
     fogBlurFilter = new PIXI.BlurFilter()
     fogBlurFilter.blur = 32 
     fogBlurFilter.quality = 4
 
     window.addEventListener('resize', drawFogOverlay)
+    window.addEventListener('resize', () => {
+        drawFogOverlay()
+        if (lightningGfx) {
+            lightningGfx.clear()
+            lightningGfx.rect(0, 0, window.innerWidth, window.innerHeight).fill({ color: 0xffffff })
+        }
+    })
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -263,7 +276,8 @@ function makeParticle(cfg: WeatherConfig, randomY = false): Particle {
 export function tickWeather() {
     if (!weatherLayer || !particleGfx || !fogOverlay) return
 
-    // Incrementa o tempo interno para criar a ondulação matemática suave da névoa
+    tickLightning()
+
     weatherTime += 0.02
 
     const cfg = WEATHER_CONFIGS[currentWeather]
