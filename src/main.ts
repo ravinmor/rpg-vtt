@@ -117,11 +117,6 @@ function restoreCharactersFromStorage() {
         character.x = saved.x;
         character.y = saved.y;
     });
-
-    const spawnedNpcs = savedCharacters.filter((item: any) => item.isNPC && !characters.find((character) => character.id === item.id));
-    if (spawnedNpcs.length > 0) {
-        characters.push(...spawnedNpcs);
-    }
 }
 
 const mouseTools = {

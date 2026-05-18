@@ -45,7 +45,8 @@ function createEmptyScenarioPage(name: string): ScenarioPage {
             zones: [],
         },
         entities: {
-            characters: [],
+            characterPlacements: [],
+            npcs: [],
         },
         session: snapshotSessionState(),
     };

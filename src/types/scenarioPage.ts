@@ -13,7 +13,12 @@ export interface ScenarioPageStageState {
 }
 
 export interface ScenarioPageEntitiesState {
-    characters: any[];
+    characterPlacements: Array<{
+        id: string;
+        x: number;
+        y: number;
+    }>;
+    npcs: any[];
 }
 
 export interface ScenarioPageSessionState {
