@@ -1,6 +1,7 @@
 // src/engine/fogOfWar.ts
 import * as PIXI from 'pixi.js'
 import { app, layerFog } from './scene'
+import { loadFogState, saveFogState } from '../repositories/fogRepository'
 
 interface FogZone {
     id:          string
@@ -241,22 +242,17 @@ export function drawEraserCursor(x: number, y: number, visible: boolean) {
 // ─────────────────────────────────────────────────────────────────────────────
 // PERSISTÊNCIA
 // ─────────────────────────────────────────────────────────────────────────────
-const FOG_KEY = 'vtt_fog_state'
-
 export function saveFog() {
-    try {
-        localStorage.setItem(FOG_KEY, JSON.stringify({
-            active: fogActive,
-            zones:  fogZones.map(z => ({ id: z.id, polygon: z.polygon, erased: z.erased }))
-        }))
-    } catch (e) { console.warn('[fog] Erro ao salvar:', e) }
+    saveFogState({
+        active: fogActive,
+        zones: fogZones.map(z => ({ id: z.id, polygon: z.polygon, erased: z.erased })),
+    })
 }
 
 export function loadFog() {
     try {
-        const raw = localStorage.getItem(FOG_KEY)
-        if (!raw) return
-        const data = JSON.parse(raw)
+        const data = loadFogState()
+        if (!data) return
         fogActive = data.active ?? false
 
         if (data.polygon && data.polygon.length >= 3) {
