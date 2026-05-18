@@ -71,6 +71,7 @@ export function registerGlobals(options: RegisterGlobalsOptions) {
     windowRef.createScenarioPage = createScenarioPage;
     windowRef.openScenarioPage = openScenarioPage;
     windowRef.saveCurrentScenarioPage = saveCurrentScenarioPage;
+    windowRef.createScenarioPage = createScenarioPage;
     windowRef.setUnit = (unit: 'ft' | 'm') => {
         setDistanceUnit(unit);
         document.getElementById('btn-unit-ft')?.classList.toggle('active', unit === 'ft');
@@ -129,4 +130,5 @@ export function registerGlobals(options: RegisterGlobalsOptions) {
         clearFog();
         saveCurrentScenarioPage();
     };
+    
 }
