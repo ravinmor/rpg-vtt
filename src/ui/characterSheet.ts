@@ -50,6 +50,7 @@ export function toggleStatus(characterId: string, statusKey: string) {
 
     updateCharacterPanels();
     saveCharacters(characters);
+    (window as any).saveCurrentScenarioPage?.();
 }
 
 export function removeStatus(characterId: string, statusKey: string) {
@@ -58,6 +59,7 @@ export function removeStatus(characterId: string, statusKey: string) {
 
     character.statuses = character.statuses.filter((status: string) => status !== statusKey);
     updateCharacterPanels();
+    (window as any).saveCurrentScenarioPage?.();
 }
 
 export function renderCharacterStatusButtons(character: any) {

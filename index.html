@@ -245,24 +245,9 @@
                 <div id="tab-campanha" class="tab-content">
                     <div class="view-control-label" style="margin: 8px;">Páginas de Cenário</div>
                     
-                    <div class="scene-item current">
-                        <div class="entity-avatar" style="background: #3d352a;"><i data-lucide="map-pin" style="width:14px;"></i></div>
-                        <div class="scene-info">
-                            <span class="scene-name">Taverna do Dragão</span>
-                            <span class="entity-sub">Mapa Atual</span>
-                        </div>
-                        <i data-lucide="check-circle-2" style="color: #d4a34d; width:16px;"></i>
-                    </div>
+                    <div id="scenario-pages-list"></div>
 
-                    <div class="scene-item">
-                        <div class="entity-avatar" style="background: #1a1306;"><i data-lucide="ghost" style="width:14px;"></i></div>
-                        <div class="scene-info">
-                            <span class="scene-name">Masmorra Sombria</span>
-                            <span class="entity-sub">Página 2</span>
-                        </div>
-                    </div>
-
-                    <button class="combat-start-btn" style="width:100%; margin-top:10px;">
+                    <button class="combat-start-btn" style="width:100%; margin-top:10px;" onclick="createScenarioPage()">
                         <i data-lucide="plus-circle"></i> Nova Página
                     </button>
                 </div>
@@ -539,3 +524,4 @@
     </script>
 </body>
 </html>
+

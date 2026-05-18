@@ -304,6 +304,7 @@ class TransformGizmo {
     }
 
     private _onPointerUp = () => {
+        ;(window as any).saveCurrentScenarioPage?.()
         this._resizeDragging = false
         this._rotateDragging = false
         this._resizeStart    = null

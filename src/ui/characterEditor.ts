@@ -54,4 +54,5 @@ export function saveCharacterEdit(onCharacterUpdated: () => void) {
     }
 
     saveCharacters(characters);
+    (window as any).saveCurrentScenarioPage?.();
 }

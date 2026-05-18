@@ -63,13 +63,14 @@ export async function initScene(canvas: HTMLCanvasElement) {
     layerFog.label     = 'layer-fog'
     layerFog.eventMode = 'none'
     layerFog.visible   = false
+    layerFog.filters   = [emptyFilter]
 
     viewport.addChild(layerEffects)
     viewport.addChild(layerGrid)  // 1º — mapa e tokens
-    viewport.addChild(layerFog)
     viewport.addChild(layerTokens)
     viewport.addChild(layerUI)
     viewport.addChild(layerPings)
+    viewport.addChild(layerFog)
 
     subLayerAreas  = new PIXI.Container()
     subLayerSpells = new PIXI.Container()

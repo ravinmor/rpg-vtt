@@ -31,6 +31,7 @@ import { renderInitiativeList } from './ui/combatPanel';
 import { loadSessionNotes } from './ui/sessionNotes';
 import { bindFloatingMenus } from './ui/floatingMenus';
 import { registerGlobals } from './app/registerGlobals';
+import { initializeScenarioPages } from './app/scenarioPages';
 import { loadCharacters } from './repositories/characterRepository';
 
 const canvas = document.getElementById('vttCanvas') as HTMLCanvasElement;
@@ -157,6 +158,7 @@ async function bootstrap() {
         setWeather,
     });
     updateIcons();
+    initializeScenarioPages();
 
     window.addEventListener('pointerdown', () => {
         console.log('Interacao detectada, videos destravados.');

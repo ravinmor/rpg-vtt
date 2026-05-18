@@ -33,6 +33,7 @@ export function parseAndAddCharacters(data: any, onCharactersChanged: () => void
     saveCharacters(characters);
     closeImportModal();
     onCharactersChanged();
+    (window as any).saveCurrentScenarioPage?.();
 }
 
 export function openImportModal() {

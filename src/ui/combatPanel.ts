@@ -30,6 +30,7 @@ export function updateCharInitiative(id: string, value: string) {
         CombatLogic.updateActiveTurn(index);
         renderInitiativeList();
     });
+    (window as any).saveCurrentScenarioPage?.();
 }
 
 export function removeMonsterFromMap() {
@@ -42,4 +43,5 @@ export function removeMonsterFromMap() {
     closeCharacterMenu();
     renderInitiativeList();
     saveCharacters(characters);
+    (window as any).saveCurrentScenarioPage?.();
 }

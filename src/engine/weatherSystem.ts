@@ -271,13 +271,18 @@ export function initWeather() {
             lightningGfx.rect(0, 0, window.innerWidth, window.innerHeight).fill({ color: 0xffffff })
         }
     })
+
+    updateWeatherButtons('clear')
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API PÚBLICA
 // ─────────────────────────────────────────────────────────────────────────────
 export function setWeather(type: WeatherType) {
-    if (type === currentWeather) return
+    if (type === currentWeather) {
+        updateWeatherButtons(type)
+        return
+    }
     currentWeather = type
     targetAlpha    = 0
     currentAlpha   = weatherLayer?.alpha ?? 1

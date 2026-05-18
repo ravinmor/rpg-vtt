@@ -14,6 +14,7 @@ import { openEditCharacterModal, closeEditCharacterModal, saveCharacterEdit } fr
 import { renderLayersList, selectLayer, toggleLayerVisibility, toggleLayerLock } from '../ui/layersPanel';
 import { saveSessionNotes, exportSessionNotes, setNotesMode } from '../ui/sessionNotes';
 import { setTool, toggleGrid } from '../ui/toolControls';
+import { createScenarioPage, openScenarioPage, saveCurrentScenarioPage } from './scenarioPages';
 
 type RegisterGlobalsOptions = {
     createIcons: (config: any) => void;
@@ -56,15 +57,25 @@ export function registerGlobals(options: RegisterGlobalsOptions) {
     windowRef.renderLayersList = renderLayersList;
     windowRef.createIcons = options.createIcons;
     windowRef.updateIcons = options.updateIcons;
-    windowRef.setDayPhase = options.setDayPhase;
-    windowRef.setWeather = options.setWeather;
+    windowRef.setDayPhase = (phase: any) => {
+        options.setDayPhase(phase);
+        saveCurrentScenarioPage();
+    };
+    windowRef.setWeather = (weather: any) => {
+        options.setWeather(weather);
+        saveCurrentScenarioPage();
+    };
     windowRef.saveSessionNotes = saveSessionNotes;
     windowRef.exportSessionNotes = exportSessionNotes;
     windowRef.setNotesMode = setNotesMode;
+    windowRef.createScenarioPage = createScenarioPage;
+    windowRef.openScenarioPage = openScenarioPage;
+    windowRef.saveCurrentScenarioPage = saveCurrentScenarioPage;
     windowRef.setUnit = (unit: 'ft' | 'm') => {
         setDistanceUnit(unit);
         document.getElementById('btn-unit-ft')?.classList.toggle('active', unit === 'ft');
         document.getElementById('btn-unit-m')?.classList.toggle('active', unit === 'm');
+        saveCurrentScenarioPage();
     };
 
     windowRef.applyCharacterHp = (direction: number) => {
@@ -73,27 +84,33 @@ export function registerGlobals(options: RegisterGlobalsOptions) {
         CombatLogic.changeHP(state.selectedCharacter.id, amount * direction, () => {
             updateCharacterPanels();
             saveCharacters(characters);
+            saveCurrentScenarioPage();
         });
     };
 
     windowRef.nextTurn = () => CombatLogic.nextTurn((index: number) => {
         CombatLogic.updateActiveTurn(index);
         renderInitiativeList();
+        saveCurrentScenarioPage();
     });
     windowRef.prevTurn = () => CombatLogic.prevTurn((index: number) => {
         CombatLogic.updateActiveTurn(index);
         renderInitiativeList();
+        saveCurrentScenarioPage();
     });
     windowRef.sortInitiative = () => CombatLogic.sortInitiative((index: number) => {
         CombatLogic.updateActiveTurn(index);
         renderInitiativeList();
+        saveCurrentScenarioPage();
     });
     windowRef.resetCombat = () => CombatLogic.resetCombat(() => {
         renderInitiativeList();
+        saveCurrentScenarioPage();
     });
     windowRef.spawn = (id: string) => {
         const center = viewport.center;
         CombatLogic.spawnMonster(id, center.x, center.y, renderInitiativeList);
+        saveCurrentScenarioPage();
     };
     windowRef.selectLayer = selectLayer;
     windowRef.toggleLayerVisibility = toggleLayerVisibility;
@@ -102,10 +119,14 @@ export function registerGlobals(options: RegisterGlobalsOptions) {
         const next = !isFogActive();
         toggleFog(next);
         import('../engine/fogOfWar').then((module) => module.saveFog());
+        saveCurrentScenarioPage();
     };
     windowRef.startFogDraw = () => {
         state.fogMode = true;
         setTool('pen');
     };
-    windowRef.clearFogArea = () => clearFog();
+    windowRef.clearFogArea = () => {
+        clearFog();
+        saveCurrentScenarioPage();
+    };
 }

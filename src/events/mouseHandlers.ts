@@ -435,6 +435,7 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
 
         if (state.isDraggingZone) {
             state.isDraggingZone = false;
+            (window as any).saveCurrentScenarioPage?.();
             if (state.editingZone && state.editingZone.type !== 'text') {
                 state.currentMenuStack = state.editingZone.type === 'spell_object'
                     ? [spellDatabase] : [menuDatabase];
@@ -449,6 +450,9 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
             if (!state.tokenHasMoved && state.selectedCharacter) {
                 tools.openCharacterMenu(state.selectedCharacter, e.clientX, e.clientY);
             }
+            if (state.tokenHasMoved) {
+                (window as any).saveCurrentScenarioPage?.();
+            }
             state.tokenDragStart = null;
             state.tokenHasMoved  = false;
             return;
@@ -458,6 +462,7 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
             state.isFogErasing = false
             // importar saveFog
             import('../engine/fogOfWar').then(m => m.saveFog())
+            ;(window as any).saveCurrentScenarioPage?.()
             return
         }
 
@@ -519,6 +524,7 @@ export function initMouseEvents(canvas: HTMLCanvasElement, _unusedCtx: any, stat
             state.editingZone = null;
             if (state.menu) state.menu.style.display = 'none';
             gizmo.detach();
+            ;(window as any).saveCurrentScenarioPage?.()
             
             if (typeof (window as any).renderLayersList === 'function') {
                 (window as any).renderLayersList();
@@ -617,6 +623,7 @@ function closePenPath(state: any, tools: any, clientX?: number, clientY?: number
     if (state.fogMode) {
         setFogPolygon(path)
         import('../engine/fogOfWar').then(m => m.saveFog())
+        ;(window as any).saveCurrentScenarioPage?.()
         state.fogMode = false
         resetPen()
         if (typeof (window as any).setTool === 'function') {

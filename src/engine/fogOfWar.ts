@@ -2,6 +2,7 @@
 import * as PIXI from 'pixi.js'
 import { app, layerFog } from './scene'
 import { loadFogState, saveFogState } from '../repositories/fogRepository'
+import type { FogPersistenceData } from '../repositories/fogRepository'
 
 interface FogZone {
     id:          string
@@ -131,8 +132,19 @@ export function toggleFog(enabled: boolean) {
 export function hasPolygon()   { return fogZones.length > 0 }
 export function isFogActive()  { return fogActive }
 export function getFogPolygon(){ return fogPolygon }
+export function getFogState(): FogPersistenceData {
+    return {
+        active: fogActive,
+        zones: fogZones.map(zone => ({
+            id: zone.id,
+            polygon: JSON.parse(JSON.stringify(zone.polygon)),
+            erased: JSON.parse(JSON.stringify(zone.erased)),
+        })),
+    }
+}
 
 export function setFogPolygon(path: { x: number; y: number }[]) {
+    fogPolygon = JSON.parse(JSON.stringify(path))
     addFogPolygon(path)
 }
 
@@ -253,34 +265,47 @@ export function loadFog() {
     try {
         const data = loadFogState()
         if (!data) return
-        fogActive = data.active ?? false
+        applyFogState(data)
+    } catch (e) { console.warn('[fog] Erro ao carregar:', e) }
+}
 
-        if (data.polygon && data.polygon.length >= 3) {
+export function applyFogState(data: FogPersistenceData | null | undefined) {
+    fogZones.forEach(zone => destroyZone(zone))
+    fogZones = []
+    fogActive = data?.active ?? false
+    fogPolygon = []
+
+    if (data?.polygon && data.polygon.length >= 3) {
+        const legacyZone: FogZone = {
+            id: 'fog_legacy',
+            polygon: data.polygon,
+            erased: data.erased || [],
+            fogSprite: null,
+            maskSprite: null,
+            maskTexture: null,
+        }
+        fogZones.push(legacyZone)
+        rebuildZone(legacyZone)
+        fogPolygon = JSON.parse(JSON.stringify(data.polygon))
+    }
+
+    data?.zones?.forEach((savedZone: any) => {
+        if (savedZone.polygon?.length >= 3) {
             const zone: FogZone = {
-                id: 'fog_legacy', polygon: data.polygon,
-                erased: data.erased || [],
-                fogSprite: null, maskSprite: null, maskTexture: null
+                id: savedZone.id,
+                polygon: savedZone.polygon,
+                erased: savedZone.erased || [],
+                fogSprite: null,
+                maskSprite: null,
+                maskTexture: null,
             }
             fogZones.push(zone)
             rebuildZone(zone)
         }
+    })
 
-        if (data.zones) {
-            data.zones.forEach((z: any) => {
-                if (z.polygon?.length >= 3) {
-                    const zone: FogZone = {
-                        id: z.id, polygon: z.polygon, erased: z.erased || [],
-                        fogSprite: null, maskSprite: null, maskTexture: null
-                    }
-                    fogZones.push(zone)
-                    rebuildZone(zone)
-                }
-            })
-        }
-
-        layerFog.visible = fogActive && fogZones.length > 0
-        updateFogButton(fogActive)
-    } catch (e) { console.warn('[fog] Erro ao carregar:', e) }
+    layerFog.visible = fogActive && fogZones.length > 0
+    updateFogButton(fogActive)
 }
 
 export function clearFog() {

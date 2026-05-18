@@ -94,13 +94,17 @@ export function initDayNight() {
 
     // Garante que a fase inicial (dia) esteja aplicada sem animação
     applyPhaseImmediate('day')
+    updateTabButtons('day')
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API PÚBLICA
 // ─────────────────────────────────────────────────────────────────────────────
 export function setDayPhase(phase: DayPhase) {
-    if (phase === currentPhase && !transitioning) return
+    if (phase === currentPhase && !transitioning) {
+        updateTabButtons(phase)
+        return
+    }
 
     transitionFrom = currentPhase
     transitionTo   = phase

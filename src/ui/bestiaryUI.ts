@@ -43,4 +43,5 @@ export function addMonsterFromSelect() {
     const centerY = window.innerHeight / 2;
 
     CombatLogic.spawnMonster(monsterId, centerX, centerY);
+    (window as any).saveCurrentScenarioPage?.();
 }

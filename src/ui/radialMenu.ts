@@ -34,6 +34,7 @@ export function applySpellObject(spellData: any) {
     state.activeZones.push(newSpell);
     state.pendingSpellPoint = null;
     w.renderLayersList();
+    w.saveCurrentScenarioPage?.();
 
     if (w.setTool) w.setTool('select');
 }
@@ -107,6 +108,7 @@ export function setEffect(item: any, e: any) {
     if (typeof w.renderLayersList === 'function') {
         w.renderLayersList();
     }
+    w.saveCurrentScenarioPage?.();
     closeMenu(null);
 }
 
@@ -118,6 +120,7 @@ export function deleteEffect(e: any) {
     }
     gizmo.detach();
     w.renderLayersList();
+    w.saveCurrentScenarioPage?.();
     closeMenu(null);
 }
 
@@ -126,6 +129,7 @@ export function clearArea() {
     state.gesturePoints = [];
     state.pendingMenuPoint = null;
     w.renderLayersList();
+    w.saveCurrentScenarioPage?.();
     closeMenu(null);
 }
 
@@ -261,6 +265,7 @@ export function updateExistingEffect(zone: any, newItem: any) {
     if (typeof w.renderLayersList === 'function') {
         ;w.renderLayersList()
     }
+    w.saveCurrentScenarioPage?.();
 }
 
 

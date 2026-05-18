@@ -7,6 +7,7 @@ import { closeCharacterMenu, updateCharacterPanels } from './characterSheet';
 export function toggleGrid() {
     state.showGrid = !state.showGrid;
     document.getElementById('btn-tool-grid')?.classList.toggle('active', state.showGrid);
+    (window as any).saveCurrentScenarioPage?.();
 }
 
 export function setTool(toolName: string) {
